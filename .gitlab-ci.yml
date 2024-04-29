@@ -1,0 +1,151 @@
+stages:
+  - test
+  - build
+  - doc
+  - publish
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+Test::Windows:
+  stage: test
+  rules:
+    - if: '$CI_COMMIT_MESSAGE =~ /\[debug]/'
+  tags:
+    - windows
+  script:
+    - cd $CI_PROJECT_DIR
+    - cmake . -B build -G "Visual Studio 17 2022" -A x64
+    - cmake --build build --target wvp_check_format -- /nologo /verbosity:minimal
+    - cmake --build build --config Debug
+    - ctest -C Debug -VV --test-dir build
+
+Test::Linux:
+  stage: test
+  rules:
+    - if: '$CI_COMMIT_MESSAGE =~ /\[debug]/'
+  tags:
+    - linux
+  script:
+    - cd $CI_PROJECT_DIR
+    - cmake . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+    - cmake --build build --target wvp_check_format -- --quiet
+    - cmake --build build
+    - ctest -C Debug -VV --test-dir build
+
+Test::MacOS:
+  stage: test
+  rules:
+    - if: '$CI_COMMIT_MESSAGE =~ /\[debug]/'
+  tags:
+    - osx
+  script:
+    - cd $CI_PROJECT_DIR
+    - cmake . -B build -G Xcode
+    - cmake --build build --target wvp_check_format -- -quiet
+    - ./resource/macos-build.sh build Debug
+    - ctest -C Debug -VV --test-dir build
+
+Build::Windows:
+  stage: build
+  tags:
+    - windows
+  before_script:
+    - powershell -Command "& {[System.IO.File]::WriteAllBytes('$CI_PROJECT_DIR\cert.p12', [System.Convert]::FromBase64String('$SECTIGO_CERT_P12'))}"
+  script:
+    - cd $CI_PROJECT_DIR
+    - cmake . -B build -G "Visual Studio 17 2022" -A x64 -DVPP_NOTARIZE=ON -DVPP_CODESIGN_WINDOWS_KEYFILE="$CI_PROJECT_DIR\cert.p12" -DVPP_CODESIGN_WINDOWS_KEYPASSWORD="$DEV_ID_PASSWORD"
+    - cmake --build build --target wvp_check_format -- /nologo /verbosity:minimal
+    - cmake --build build --config Release
+    - ctest -C Release -VV --test-dir build
+    - mv .\package/Whisper-install.exe .\Whisper-install.exe
+  after_script:
+    - powershell -Command "Remove-Item -Path '$CI_PROJECT_DIR\cert.p12' -Force"
+  artifacts:
+    name: "Whisper-Windows"
+    paths:
+      - $CI_PROJECT_DIR/Whisper-install.exe
+    expire_in: 1 week
+
+Build::Linux:
+  stage: build
+  tags:
+    - linux
+  script:
+    - cd $CI_PROJECT_DIR
+    - cmake . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+    - cmake --build build --target wvp_check_format -- --quiet
+    - cmake --build build
+    - ctest -C Release -VV --test-dir build
+    - mv ./package/ ./Whisper/
+  artifacts:
+    name: "Whisper-Linux"
+    paths:
+      - $CI_PROJECT_DIR/Whisper/
+    expire_in: 1 week
+
+Build::MacOS:
+  stage: build
+  tags:
+    - osx
+  before_script:
+    - security create-keychain -p "$DEV_ID_PASSWORD" buildagent
+    - security unlock-keychain -p "$DEV_ID_PASSWORD" buildagent
+    - security list-keychains -s buildagent && security default-keychain -s buildagent
+    - echo $DEV_ID_APP_CERT | base64 --decode > ./cert.p12
+    - security import ./cert.p12 -P "$DEV_ID_PASSWORD" -A -t cert -f pkcs12 -k buildagent -T /usr/bin/codesign >/dev/null
+    - rm ./cert.p12
+    - echo $DEV_ID_INST_CERT | base64 --decode > ./cert.p12
+    - security import ./cert.p12 -P "$DEV_ID_PASSWORD" -A -t cert -f pkcs12 -k buildagent -T /usr/bin/codesign >/dev/null
+    - rm ./cert.p12
+    - security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k "$DEV_ID_PASSWORD" buildagent >/dev/null
+    - xcrun notarytool store-credentials "notary-installer" --apple-id "$DEV_USER_APPLE_ID" --team-id 3BD2P55TR2 --password $DEV_SPEC_APP_PASSWORD >/dev/null
+  script:
+    - cd $CI_PROJECT_DIR
+    - cmake . -B build -G Xcode -DVPP_CODESIGN_APPLE_KEYCHAIN_PROFILE_INSTALLER="notary-installer" -DVPP_NOTARIZE=ON
+    - security unlock-keychain -p "$DEV_ID_PASSWORD" buildagent
+    - cmake --build build --target wvp_check_format -- -quiet
+    - ./resource/macos-build.sh build Release
+    - ctest -C Release -VV --test-dir build
+    - mv ./package/Whisper.pkg ./Whisper.pkg
+  after_script:
+    - homedir=~
+    - eval homedir=$homedir
+    - default_keychain=$homedir/Library/Keychains/login.keychain-db
+    - security default-keychain -s "$default_keychain" && security list-keychains -s "$default_keychain"
+    - security delete-keychain buildagent || true
+  artifacts:
+    name: "Whisper-MacOS"
+    paths:
+      - $CI_PROJECT_DIR/Whisper.pkg
+    expire_in: 1 week
+
+Doc:
+  stage: doc
+  tags:
+    - osx
+  needs: []
+  before_script:
+    - npm install mdpdf -g
+  script:
+    - cmake . -B build -G Xcode
+    - cmake --build build --target wvp_manual -- -quiet
+    - mkdir Whisper-manual
+    - cp ./build/_deps/whisper_cpp-src/models/download-ggml-model.cmd ./Whisper-manual/
+    - cp ./build/_deps/whisper_cpp-src/models/download-ggml-model.sh ./Whisper-manual/
+    - mv build/Whisper-manual.pdf ./Whisper-manual/Whisper-manual.pdf
+  artifacts:
+    name: "Whisper-Manual"
+    paths:
+      - $CI_PROJECT_DIR/Whisper-manual/
+    expire_in: 1 week
+
+Publish:
+  stage: publish
+  tags:
+    - osx
+  needs: ["Build::Linux", "Build::MacOS", "Build::Windows", "Doc"]
+  only:
+    - tags
+  script:
+    - $CI_PROJECT_DIR/resource/publish-all.sh --tag "$CI_COMMIT_TAG" -u "$NEXTCLOUD_NAME" -p "$NEXTCLOUD_PASSWORD" --ci
