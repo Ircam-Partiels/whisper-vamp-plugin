@@ -1,5 +1,9 @@
 # Whisper Vamp Plugin
 
+<p align="center">
+    <a href="https://github.com/Ircam-Partiels/whisper-vamp-plugin/actions/workflows/ci.yml"><img src="https://github.com/Ircam-Partiels/whisper-vamp-plugin/actions/workflows/ci.yml/badge.svg" alt="Workflows"></a>
+  </p>
+
 The Whisper plug-in is an implementation of the [Whisper](https://github.com/openai/whisper) speech recognition model developed by [OpenAI](https://openai.com/) as a [Vamp plug-in](https://www.vamp-plugins.org/). The Whisper plug-in analyses the text in the audio stream and generates markers corresponding to the tokens (words and/or syllables) found.
 
 The Whisper Vamp Plugin has been designed for use in the [Partiels](https://forum.ircam.fr/projects/detail/partiels/) application and requires the [Ircam Vamp Extension](https://github.com/Ircam-Partiels/ircam-vamp-extension). 
