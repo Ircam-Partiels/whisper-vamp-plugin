@@ -135,7 +135,7 @@ if(CLANG_FORMAT_EXE)
     add_custom_target(wvp_check_format ${CLANG_FORMAT_EXE} --Werror --dry-run --verbose -style=file ${WVP_SOURCES})
     add_custom_target(wvp_apply_format ${CLANG_FORMAT_EXE} -i -style=file ${WVP_SOURCES})
 else()
-    message(WARNING "Clang Format targets cannot be generated because clang-format is not found")
+    message(STATUS "Clang Format targets cannot be generated because clang-format is not found")
 endif()
 
 ### Manual ###
@@ -152,7 +152,7 @@ if(APPLE)
         VERBATIM
         )
   else()
-    message(WARNING "Manual target cannot be generated because mdpdf is not found")
+    message(STATUS "Manual target cannot be generated because mdpdf is not found")
   endif()
 endif()
 
