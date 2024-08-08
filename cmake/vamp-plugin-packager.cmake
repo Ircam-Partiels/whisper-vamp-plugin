@@ -49,7 +49,7 @@ endif()
 
 # Generations
 if(WIN32) # WINDOWs
-  set(VPP_PACKAGE "${VPP_DIR}/${VPP_NAME}-install.exe")
+  set(VPP_PACKAGE "${VPP_DIR}/${VPP_NAME}-Windows.exe")
 
   set(VPP_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/PkgTemp")
   cmake_path(NATIVE_PATH VPP_TEMP_DIR VPP_TEMP_DIR_NAT)
@@ -71,7 +71,7 @@ if(WIN32) # WINDOWs
   file(APPEND ${VPP_ISS_FILE} "DisableDirPage=no\n")
   file(APPEND ${VPP_ISS_FILE} "OutputDir=..\\build\n")
   file(APPEND ${VPP_ISS_FILE} "InfoBeforeFile=${VPP_ABOUT_FILE}\n")
-  file(APPEND ${VPP_ISS_FILE} "OutputBaseFilename=${VPP_NAME}-install\n")
+  file(APPEND ${VPP_ISS_FILE} "OutputBaseFilename=${VPP_NAME}-Windows\n")
   file(APPEND ${VPP_ISS_FILE} "Compression=lzma\n")
   file(APPEND ${VPP_ISS_FILE} "SolidCompression=yes\n")
   file(APPEND ${VPP_ISS_FILE} "WizardStyle=modern\n")
@@ -118,7 +118,7 @@ if(WIN32) # WINDOWs
   add_custom_target(${VPP_NAME}_package ALL COMMAND ${VPP_SCRIPT} COMMENT "Packaging the Vamp plug-ins")
 
 elseif(APPLE) # APPLE
-  set(VPP_PACKAGE "${VPP_DIR}/${VPP_NAME}.pkg")
+  set(VPP_PACKAGE "${VPP_DIR}/${VPP_NAME}-MacOS.pkg")
   file(MAKE_DIRECTORY ${VPP_DIR})
 
   set(VPP_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/PkgTemp")
@@ -206,7 +206,7 @@ elseif(APPLE) # APPLE
   add_custom_target(${VPP_NAME}_package ALL COMMAND ${VPP_PACKAGE_SCRIPT})
 
 elseif(UNIX) # LINUX
-  set(VPP_PACKAGE "${VPP_DIR}/${VPP_NAME}.tar.gz")
+  set(VPP_PACKAGE "${VPP_DIR}/${VPP_NAME}-Linux.tar.gz")
   file(MAKE_DIRECTORY ${VPP_DIR})
   set(VPP_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/Whisper")
   file(MAKE_DIRECTORY ${VPP_TEMP_DIR})
