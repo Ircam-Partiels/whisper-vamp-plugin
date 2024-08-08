@@ -206,22 +206,26 @@ elseif(APPLE) # APPLE
   add_custom_target(${VPP_NAME}_package ALL COMMAND ${VPP_PACKAGE_SCRIPT})
 
 elseif(UNIX) # LINUX
+  set(VPP_PACKAGE "${VPP_DIR}/${VPP_NAME}.tar.gz")
+  file(MAKE_DIRECTORY ${VPP_DIR})
+  set(VPP_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/Whisper")
+  file(MAKE_DIRECTORY ${VPP_TEMP_DIR})
 
   if(EXISTS ${VPP_ABOUT_FILE})
-    file(COPY ${VPP_ABOUT_FILE} DESTINATION ${VPP_DIR})
+    file(COPY ${VPP_ABOUT_FILE} DESTINATION ${VPP_TEMP_DIR})
   endif()
 
   if(EXISTS ${VPP_CHANGELOG_FILE})
-    file(COPY ${VPP_CHANGELOG_FILE} DESTINATION ${VPP_DIR})
+    file(COPY ${VPP_CHANGELOG_FILE} DESTINATION ${VPP_TEMP_DIR})
   endif()
   
-  set(VPP_INSTALL_SCRIPT  "${VPP_DIR}/Install.sh")
+  set(VPP_INSTALL_SCRIPT "${VPP_TEMP_DIR}/Install.sh")
   file(WRITE ${VPP_INSTALL_SCRIPT} "#!/bin/sh\n\n")
   file(APPEND ${VPP_INSTALL_SCRIPT} "ThisPath=\"$( cd -- \"$(dirname \"$0\")\" >/dev/null 2>&1 ; pwd -P )\"\n")
   file(APPEND ${VPP_INSTALL_SCRIPT} "mkdir -p $HOME/vamp\n")
   file(CHMOD ${VPP_INSTALL_SCRIPT} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
-  set(VPP_UNINSTALL_SCRIPT  "${VPP_DIR}/Uninstall.sh")
+  set(VPP_UNINSTALL_SCRIPT "${VPP_TEMP_DIR}/Uninstall.sh")
   file(WRITE ${VPP_UNINSTALL_SCRIPT} "#!/bin/sh\n\n")
   file(CHMOD ${VPP_UNINSTALL_SCRIPT} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
@@ -236,14 +240,14 @@ elseif(UNIX) # LINUX
     file(APPEND ${VPP_UNINSTALL_SCRIPT} "rm -f $HOME/vamp/${PLUGIN_NAME}.cat\n")
     
     add_custom_target(${target}_package 
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${target}> ${VPP_DIR}/${PLUGIN_NAME}.so
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:${target}>/${PLUGIN_NAME}.cat ${VPP_DIR}/${PLUGIN_NAME}.cat
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${target}> ${VPP_TEMP_DIR}/${PLUGIN_NAME}.so
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:${target}>/${PLUGIN_NAME}.cat ${VPP_TEMP_DIR}/${PLUGIN_NAME}.cat
     )
     add_dependencies(${target}_package ${target})
     add_dependencies(${VPP_NAME}_package ${target}_package)
   endfunction(vpp_add_plugin)
 
-  add_custom_target(${VPP_NAME}_package ALL)
+  add_custom_target(${VPP_NAME}_package ALL COMMAND ${CMAKE_COMMAND} -E tar czf ${VPP_PACKAGE} ${VPP_TEMP_DIR})
 
 endif()
 
