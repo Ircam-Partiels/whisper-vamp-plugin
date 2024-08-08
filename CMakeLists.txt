@@ -139,21 +139,20 @@ else()
 endif()
 
 ### Manual ###
-if(APPLE)
-  find_program(MDPDF_EXE "mdpdf")
-  find_program(SED_EXE "sed")
-  if(MDPDF_EXE)
-    set(WVP_MANUAL_PATH ${CMAKE_CURRENT_BINARY_DIR}/whisper-manual.md)
-    add_custom_target(wvp_manual 
-        COMMAND ${CMAKE_COMMAND} -E copy  ${CMAKE_CURRENT_SOURCE_DIR}/docs/whisper-manual.md ${WVP_MANUAL_PATH}
-        COMMAND ${SED_EXE} -i "" "s/APPVERSION/${CMAKE_PROJECT_VERSION_MAJOR}/g" "${WVP_MANUAL_PATH}"
-        COMMAND ${SED_EXE} -i "" -e "s|src=\"images|src=\"${CMAKE_CURRENT_SOURCE_DIR}/docs/images|g" "${WVP_MANUAL_PATH}"
-        COMMAND ${MDPDF_EXE} ${WVP_MANUAL_PATH}
-        VERBATIM
-        )
-  else()
-    message(STATUS "Manual target cannot be generated because mdpdf is not found")
-  endif()
+set(WVP_MANUAL_DIR ${CMAKE_CURRENT_BINARY_DIR}/Manual)
+file(MAKE_DIRECTORY ${WVP_MANUAL_DIR})
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/docs/whisper-manual.md MANUAL_CONTENT)
+string(REPLACE "APPVERSION" "${WVP_BUILD_TAG} (${GIT_COMMIT_ID})" MANUAL_CONTENT ${MANUAL_CONTENT})
+string(REPLACE "src=\"../resource/" "src=\"./" MANUAL_CONTENT ${MANUAL_CONTENT})
+file(WRITE ${WVP_MANUAL_DIR}/whisper-manual.md ${MANUAL_CONTENT})
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/_deps/whisper_cpp-src/models/download-ggml-model.cmd DESTINATION ${WVP_MANUAL_DIR})
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/_deps/whisper_cpp-src/models/download-ggml-model.sh DESTINATION ${WVP_MANUAL_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resource/Screenshot.png DESTINATION ${WVP_MANUAL_DIR})
+find_program(MDPDF_EXE "mdpdf")
+if(MDPDF_EXE)
+  add_custom_target(wvp_manual COMMAND ${MDPDF_EXE} ${WVP_MANUAL_DIR}/whisper-manual.md --debug VERBATIM)
+else()
+  message(STATUS "Manual target cannot be generated because mdpdf is not found")
 endif()
 
 ### Install ###
