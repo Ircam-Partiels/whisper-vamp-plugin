@@ -6,6 +6,10 @@
 <a href="www.ircam.fr">www.ircam.fr</a><br><br>
 </p>
 
+<p align="center">
+<img src="../resource/Screenshot.png" alt="Example" width="400"/>
+</p>
+
 ## Table of contents
 
 1. [Introduction](#introduction)
