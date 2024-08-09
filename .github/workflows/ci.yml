@@ -69,6 +69,7 @@ jobs:
         draft: true
         prerelease: true
         fail_on_unmatched_files: true
+        generate_release_notes: true
         files: ${{ github.workspace }}/package/Whisper-Linux.tar.gz
   # Compiles, tests and packages the plugin for Windows.
   Windows:
@@ -104,6 +105,7 @@ jobs:
         draft: true
         prerelease: true
         fail_on_unmatched_files: true
+        generate_release_notes: true
         files: ${{ github.workspace }}/package/Whisper-Windows.exe
   # Compiles, tests and packages the plugin for MacOS.
   MacOS:
@@ -154,6 +156,7 @@ jobs:
         draft: true
         prerelease: true
         fail_on_unmatched_files: true
+        generate_release_notes: true
         files: ${{ github.workspace }}/package/Whisper-MacOS.pkg
   # Generates the documentation.
   Doc:
@@ -191,4 +194,5 @@ jobs:
         draft: true
         prerelease: true
         fail_on_unmatched_files: true
+        generate_release_notes: true
         files: ${{ github.workspace }}/Whisper-Manual.zip
