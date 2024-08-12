@@ -68,7 +68,7 @@ set(VPP_ABOUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/About.txt" CACHE PATH "
 set(VPP_CHANGELOG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/ChangeLog.txt" CACHE PATH "The changelog file to add to the distribution" FORCE)
 set(VPP_ICON_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/Ircam-logo-noir-RS.png" CACHE PATH "The icon file to add to the distribution" FORCE)
 set(VPP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/package CACHE PATH "The directory of the package" FORCE)
-include(cmake/vamp-plugin-packager.cmake)
+include(vamp-plugin-packager/vamp-plugin-packager.cmake)
 
 ### Source ###
 set(WVP_MODEL_CPP ${CMAKE_CURRENT_BINARY_DIR}/source/wvp_model.cpp)
