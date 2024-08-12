@@ -1,6 +1,4 @@
-The Whisper plug-in analyzes the text present in the audio stream and generates markers corresponding to the tokens (words and/or syllables) found.
-
-The Whisper plug-in is an implementation of the Whisper speech recognition model developed by OpenAI  as a Vamp plug-in. 
+The Whisper plugin is an implementation of the Whisper speech recognition model developed by OpenAI as a Vamp plugin. The Whisper plugin analyses the text in the audio stream and generates markers corresponding to the tokens (words and/or syllables) found. 
 
 - Whisper Vamp plug-in by Pierre Guillot at Ircam (https://www.ircam.fr/)
 - Whisper.cpp by Georgi Gerganov (https://ggerganov.com/)
