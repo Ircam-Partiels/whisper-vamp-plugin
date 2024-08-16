@@ -483,7 +483,6 @@ Wvp::Plugin::FeatureSet Wvp::Plugin::process(float const* const* inputBuffers, [
     FeatureList fl;
     while(blockSize > 0)
     {
-        auto const sampleRate = static_cast<double>(getInputSampleRate());
         auto const nextTime = mRanges.upper_bound(mAdvancement);
         if(nextTime != mRanges.cend())
         {
