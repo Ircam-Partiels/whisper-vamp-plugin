@@ -141,7 +141,7 @@ jobs:
       run: |
         security unlock-keychain -p ${{ secrets.DEV_ID_PASSWORD }} buildagent
         security set-keychain-settings -lut 7200 buildagent
-        set -o pipefail && cmake --build ${{ github.workspace }}/build --config ${{ env.build_type }} | xcbeautify --renderer github-actions
+        set -o pipefail && cmake --build ${{ github.workspace }}/build --config ${{ env.build_type }} | xcbeautify --renderer github-actions --disable-logging
     - name: Test
       run: ctest -C ${{ env.build_type }} -VV --test-dir ${{ github.workspace }}/build
     - name: Artifact
