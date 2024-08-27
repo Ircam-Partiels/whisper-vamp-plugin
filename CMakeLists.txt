@@ -157,6 +157,14 @@ else()
   message(STATUS "Manual target cannot be generated because mdpdf is not found")
 endif()
 
+### Publishing ###
+set(PROJECT_URL "https://github.com/Ircam-Partiels/whisper-vamp-plugin")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "## Downloads\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Linux.tar.gz](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Linux.tar.gz)\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-MacOS.pkg](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-MacOS.pkg)\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Windows.exe](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Windows.exe)\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Manual.zip](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Manual.zip)\n") 
+
 ### Install ###
 if(APPLE)
   install(TARGETS wvp RUNTIME LIBRARY DESTINATION "~/Library/Audio/Plug-Ins/Vamp/")
