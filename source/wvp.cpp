@@ -310,15 +310,16 @@ void Wvp::Plugin::reset()
 {
     auto const createContext = [this]() -> struct whisper_context*
     {
+        auto params = whisper_context_default_params();
         if(mModelIndex == 0)
         {
-            return whisper_init_from_buffer_with_params(const_cast<void*>(Wvp::model), Wvp::model_size, whisper_context_default_params());
+            return whisper_init_from_buffer_with_params(const_cast<void*>(Wvp::model), Wvp::model_size, params);
         }
         auto const models = getModelPaths();
         if(mModelIndex <= models.size())
         {
             auto const path = models.at(mModelIndex - 1).string();
-            return whisper_init_from_file_with_params(path.c_str(), whisper_context_default_params());
+            return whisper_init_from_file_with_params(path.c_str(), params);
         }
         return nullptr;
     };
@@ -359,6 +360,33 @@ Wvp::Plugin::ParameterList Wvp::Plugin::getParameterDescriptors() const
         param.quantizeStep = 1.0f;
         list.push_back(std::move(param));
     }
+    {
+        ParameterDescriptor param;
+        param.identifier = "splitmode";
+        param.name = "Split Mode";
+        param.description = "The model splits the text on sentences, words or tokens";
+        param.unit = "";
+        param.valueNames = {"Sentences", "Words", "Tokens"};
+        param.minValue = 0.0f;
+        param.maxValue = 2.0f;
+        param.defaultValue = 2.0f;
+        param.isQuantized = true;
+        param.quantizeStep = 1.0f;
+        list.push_back(std::move(param));
+    }
+    {
+        ParameterDescriptor param;
+        param.identifier = "suppressnonspeechtokens";
+        param.name = "Suppress Non-Speech Tokens";
+        param.description = "The model suppresses non-speech tokens";
+        param.unit = "";
+        param.minValue = 0.0f;
+        param.maxValue = 1.0f;
+        param.defaultValue = 1.0f;
+        param.isQuantized = true;
+        param.quantizeStep = 1.0f;
+        list.push_back(std::move(param));
+    }
     return list;
 }
 
@@ -368,6 +396,14 @@ void Wvp::Plugin::setParameter(std::string paramid, float newval)
     {
         auto const max = static_cast<float>(getModelPaths().size());
         mModelIndex = static_cast<size_t>(std::floor(std::clamp(newval, 0.0f, max)));
+    }
+    else if(paramid == "splitmode")
+    {
+        mSplitMode = static_cast<size_t>(std::floor(std::clamp(newval, 0.0f, 2.0f)));
+    }
+    else if(paramid == "suppressnonspeechtokens")
+    {
+        mSuppressNonSpeechTokens = newval > 0.5f;
     }
     else
     {
@@ -380,6 +416,14 @@ float Wvp::Plugin::getParameter(std::string paramid) const
     if(paramid == "model")
     {
         return static_cast<float>(mModelIndex);
+    }
+    if(paramid == "splitmode")
+    {
+        return static_cast<float>(mSplitMode);
+    }
+    if(paramid == "suppressnonspeechtokens")
+    {
+        return mSuppressNonSpeechTokens ? 1.0f : 0.0f;
     }
     std::cerr << "Invalid parameter : " << paramid << "\n";
     return 0.0f;
@@ -408,15 +452,16 @@ Wvp::Plugin::OutputExtraList Wvp::Plugin::getOutputExtraDescriptors(size_t outpu
 Wvp::Plugin::FeatureList Wvp::Plugin::getCurrentFeatures(size_t timeOffset)
 {
     auto params = whisper_full_default_params(whisper_sampling_strategy::WHISPER_SAMPLING_GREEDY);
-    params.token_timestamps = true;
     params.no_context = true;
     params.print_progress = false;
     params.print_timestamps = false;
     params.print_special = false;
     params.translate = false;
-    params.suppress_non_speech_tokens = true;
+    params.suppress_non_speech_tokens = mSuppressNonSpeechTokens;
     params.language = nullptr;
-    params.split_on_word = false;
+    params.token_timestamps = mSplitMode >= 1;
+    params.max_len = mSplitMode == 1;
+    params.split_on_word = mSplitMode == 1;
     static auto const minSize = gModelSampleRate + gModelSampleRate / 10;
     if(mBufferPosition < minSize)
     {
@@ -434,22 +479,39 @@ Wvp::Plugin::FeatureList Wvp::Plugin::getCurrentFeatures(size_t timeOffset)
     auto const nsegments = whisper_full_n_segments(mHandle.get());
     for(int i = 0; i < nsegments; ++i)
     {
-        auto const* text = whisper_full_get_segment_text(mHandle.get(), i);
-        auto const ntokens = whisper_full_n_tokens(mHandle.get(), i);
-        for(int j = 0; j < ntokens; ++j)
+        if(mSplitMode < 2)
         {
-            auto const data = whisper_full_get_token_data(mHandle.get(), i, j);
-            if(data.id < whisper_token_eot(mHandle.get()))
+            auto const* text = whisper_full_get_segment_text(mHandle.get(), i);
+            auto const t0 = whisper_full_get_segment_t0(mHandle.get(), i);
+            auto const t1 = whisper_full_get_segment_t1(mHandle.get(), i);
+            Feature feature;
+            feature.hasTimestamp = true;
+            auto const time = Vamp::RealTime::fromSeconds(static_cast<double>(t0) / 100.0);
+            feature.timestamp = time + offset;
+            feature.hasDuration = true;
+            feature.duration = Vamp::RealTime::fromSeconds(static_cast<double>(t1) / 100.0) - time;
+            feature.label = text;
+            feature.values.push_back(1.0);
+            fl.push_back(std::move(feature));
+        }
+        else
+        {
+            auto const ntokens = whisper_full_n_tokens(mHandle.get(), i);
+            for(int j = 0; j < ntokens; ++j)
             {
-                Feature feature;
-                feature.hasTimestamp = true;
-                auto const time = Vamp::RealTime::fromSeconds(static_cast<double>(data.t0) / 100.0);
-                feature.timestamp = time + offset;
-                feature.hasDuration = true;
-                feature.duration = Vamp::RealTime::fromSeconds(static_cast<double>(data.t1) / 100.0) - time;
-                feature.label = whisper_full_get_token_text(mHandle.get(), i, j);
-                feature.values.push_back(data.p);
-                fl.push_back(std::move(feature));
+                auto const data = whisper_full_get_token_data(mHandle.get(), i, j);
+                if(!mSuppressNonSpeechTokens || data.id < whisper_token_eot(mHandle.get()))
+                {
+                    Feature feature;
+                    feature.hasTimestamp = true;
+                    auto const time = Vamp::RealTime::fromSeconds(static_cast<double>(data.t0) / 100.0);
+                    feature.timestamp = time + offset;
+                    feature.hasDuration = true;
+                    feature.duration = Vamp::RealTime::fromSeconds(static_cast<double>(data.t1) / 100.0) - time;
+                    feature.label = whisper_full_get_token_text(mHandle.get(), i, j);
+                    feature.values.push_back(data.p);
+                    fl.push_back(std::move(feature));
+                }
             }
         }
     }
