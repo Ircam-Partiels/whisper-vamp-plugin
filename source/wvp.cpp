@@ -445,6 +445,7 @@ Wvp::Plugin::FeatureList Wvp::Plugin::getCurrentFeatures(size_t timeOffset)
                 feature.hasTimestamp = true;
                 auto const time = Vamp::RealTime::fromSeconds(static_cast<double>(data.t0) / 100.0);
                 feature.timestamp = time + offset;
+                feature.hasDuration = true;
                 feature.duration = Vamp::RealTime::fromSeconds(static_cast<double>(data.t1) / 100.0) - time;
                 feature.label = whisper_full_get_token_text(mHandle.get(), i, j);
                 feature.values.push_back(data.p);
