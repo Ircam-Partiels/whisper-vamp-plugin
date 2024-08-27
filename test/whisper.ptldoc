@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<document MiscModelVersion="131075" viewport_x="0" viewport_y="0" path="/Users/guillot/Gitlab/IVP/whisper-vamp-plugin/test/m10_row_spoken.ptldoc"
+<document MiscModelVersion="131075" viewport_x="0" viewport_y="0" path="/Users/guillot/Gitlab/IVP/whisper-vamp-plugin/test/whisper.ptldoc"
           grid="1" autoresize="1" samplerate="44100.0" channels="1">
   <reader>
     <value file="/Users/guillot/Nextcloud/Sound Banks/VocalSet1-2/data_by_singer/male10/excerpts/spoken/m10_row_spoken.wav"
@@ -14,11 +14,11 @@
     <grid MiscModelVersion="131075" tickReference="0.0" mainTickInterval="0"
           tickPowerBase="2.0" tickDivisionFactor="10.0"/>
   </timeZoom>
-  <transport MiscModelVersion="131075" startPlayhead="3.422610122921399" looping="0"
+  <transport MiscModelVersion="131075" startPlayhead="1.15140832130236" looping="0"
              loopRange_start="0.0" loopRange_end="0.0" stopAtLoopEnd="0" autoScroll="1"
              gain="1.0" magnetize="0"/>
   <groups MiscModelVersion="131075" identifier="0cbca15363f34e82af09c599fdff328c"
-          name="Group 1" height="681" colour="0" expanded="0" referenceid="">
+          name="Group 1" height="595" colour="0" expanded="1" referenceid="">
     <layout value="3c7b46ce4d534244b77669c0ed91a216"/>
     <layout value="24b3f47a03a745c2980a09cb873d5542"/>
     <zoom MiscModelVersion="131075" globalRange_start="0.0" globalRange_end="1.0"
@@ -28,7 +28,7 @@
     </zoom>
   </groups>
   <groups MiscModelVersion="131075" identifier="3a1a8c77cc504338a8cc8452b77cc31f"
-          name="Group 2" height="194" colour="ff3c0066" expanded="0" referenceid="">
+          name="Group 2" height="170" colour="ff3c0066" expanded="0" referenceid="">
     <layout value="c03605ef7aea48b19ed64beb9c18759d"/>
     <zoom MiscModelVersion="131075" globalRange_start="0.0" globalRange_end="1.0"
           minimumLength="0.0" visibleRange_start="0.4499999992549419" visibleRange_end="0.5500000603497028">
@@ -37,12 +37,12 @@
     </zoom>
   </groups>
   <tracks MiscModelVersion="131075" identifier="3c7b46ce4d534244b77669c0ed91a216"
-          name="Whisper" input="" height="63" font="Nunito Sans; 32.0 Bold"
+          name="Whisper" input="" height="55" font="Nunito Sans; 32.0 Bold"
           showInGroup="1" zoomValueMode="0" zoomLink="1">
     <file path="" commit="">
       <args/>
     </file>
-    <description name="Whisper" inputDomain="0" maker="Ircam" version="0" category="Speech To Text"
+    <description name="Whisper" inputDomain="0" maker="Ircam" version="1" category="Speech To Text"
                  details="Automatic speech recognition using OpenAI's Whisper model.&#10;Whisper models by OpenAI. Whisper.cpp by Georgi Gerganov. Whisper Vamp Plugin by Pierre Guillot. Copyright 2024 Ircam. All rights reserved.">
       <defaultState blockSize="1024" stepSize="0" windowType="3">
         <parameters key="model" value="0.0"/>
@@ -73,7 +73,7 @@
              minValue="0.0" maxValue="0.0" isQuantized="0" quantizeStep="0.0"
              sampleType="2" sampleRate="0.0" hasDuration="0"/>
     </description>
-    <key identifier="whisper:ircamwhisper" feature="token"/>
+    <key identifier="ircamwhisper:whisper" feature="token"/>
     <state blockSize="1024" stepSize="0" windowType="3">
       <parameters key="model" value="3.0"/>
     </state>
@@ -93,7 +93,7 @@
     </binZoom>
   </tracks>
   <tracks MiscModelVersion="131075" identifier="24b3f47a03a745c2980a09cb873d5542"
-          name="Fast Fourier Transform" input="" height="63" font="Nunito Sans; 14.0 Regular"
+          name="Fast Fourier Transform" input="" height="55" font="Nunito Sans; 14.0 Regular"
           showInGroup="1" zoomValueMode="1" zoomLink="1">
     <file path="" commit="">
       <args/>

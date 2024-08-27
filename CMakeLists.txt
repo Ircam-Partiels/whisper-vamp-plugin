@@ -114,8 +114,8 @@ ive_prepare_plugin_target(wvp)
 target_link_libraries(wvp PRIVATE whisper)
 target_compile_definitions(wvp PRIVATE WVP_PLUGIN_VERSION=${PROJECT_VERSION_MAJOR})
 
-add_custom_command(TARGET wvp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resource/whisper.cat "$<IF:$<CONFIG:Debug>,${CMAKE_CURRENT_BINARY_DIR}/Debug/whisper.cat,${CMAKE_CURRENT_BINARY_DIR}/Release/whisper.cat>")
-set_target_properties(wvp PROPERTIES LIBRARY_OUTPUT_NAME whisper)
+add_custom_command(TARGET wvp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resource/ircamwhisper.cat "$<IF:$<CONFIG:Debug>,${CMAKE_CURRENT_BINARY_DIR}/Debug/ircamwhisper.cat,${CMAKE_CURRENT_BINARY_DIR}/Release/ircamwhisper.cat>")
+set_target_properties(wvp PROPERTIES LIBRARY_OUTPUT_NAME ircamwhisper)
 vpp_add_plugin(wvp)
 
 find_program(PARTIELS_EXE "Partiels" HINTS ${PARTIELS_EXE_HINT_PATH} NO_CACHE)
@@ -160,13 +160,13 @@ endif()
 ### Install ###
 if(APPLE)
   install(TARGETS wvp RUNTIME LIBRARY DESTINATION "~/Library/Audio/Plug-Ins/Vamp/")
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resource/whisper.cat DESTINATION "~/Library/Audio/Plug-Ins/Vamp/")
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resource/ircamwhisper.cat DESTINATION "~/Library/Audio/Plug-Ins/Vamp/")
 elseif(UNIX)
   install(TARGETS wvp RUNTIME LIBRARY DESTINATION "~/vamp/")
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resource/whisper.cat DESTINATION "~/vamp/")
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resource/ircamwhisper.cat DESTINATION "~/vamp/")
 elseif(WIN32)
   install(TARGETS wvp RUNTIME DESTINATION "$ENV{PROGRAMFILES}/Vamp Plugins/" PERMISSIONS OWNER_WRITE)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resource/whisper.cat DESTINATION "$ENV{PROGRAMFILES}/Vamp Plugins/")
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resource/ircamwhisper.cat DESTINATION "$ENV{PROGRAMFILES}/Vamp Plugins/")
 endif()
 
 ### Testing ###

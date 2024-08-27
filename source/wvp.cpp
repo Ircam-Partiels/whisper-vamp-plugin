@@ -213,7 +213,7 @@ bool Wvp::Plugin::initialise(size_t channels, size_t stepSize, size_t blockSize)
 
 std::string Wvp::Plugin::getIdentifier() const
 {
-    return "ircamwhisper";
+    return "whisper";
 }
 
 std::string Wvp::Plugin::getName() const
