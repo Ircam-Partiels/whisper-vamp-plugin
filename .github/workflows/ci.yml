@@ -34,7 +34,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./build/source
-        key: wvp-model-tiny
+        key: wvp-model-base-q5_1
         enableCrossOsArchive: true
     - name: Configure
       run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }}
@@ -50,7 +50,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./build/source
-        key: wvp-model-tiny
+        key: wvp-model-base-q5_1
         enableCrossOsArchive: true
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Configure
@@ -86,7 +86,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./build/source
-        key: wvp-model-tiny
+        key: wvp-model-base-q5_1
         enableCrossOsArchive: true
     - name: Prepare
       run: powershell -Command "& {[System.IO.File]::WriteAllBytes('${{ github.workspace }}\cert.p12', [System.Convert]::FromBase64String('${{ secrets.SECTIGO_CERT_P12}}'))}"
@@ -124,7 +124,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./build/source
-        key: wvp-model-tiny
+        key: wvp-model-base-q5_1
         enableCrossOsArchive: true
     - name: Prepare
       run: |
@@ -179,7 +179,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./build/source
-        key: wvp-model-tiny
+        key: wvp-model-base-q5_1
         enableCrossOsArchive: true
     - name: Configure
       run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DBPVP_BUILD_TAG=${{ env.tag_name }}
