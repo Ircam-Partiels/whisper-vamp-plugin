@@ -349,7 +349,7 @@ Wvp::Plugin::ParameterList Wvp::Plugin::getParameterDescriptors() const
         param.name = "Model";
         param.description = "The model used to generate the tokens";
         param.unit = "";
-        param.valueNames.push_back("embedded");
+        param.valueNames.push_back("ggml-base-q5_1 (embedded)");
         for(auto const& model : models)
         {
             param.valueNames.push_back(model.filename().replace_extension().string());
