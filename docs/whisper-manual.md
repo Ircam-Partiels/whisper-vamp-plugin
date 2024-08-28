@@ -25,7 +25,7 @@ The Whisper plugin is an implementation of the [Whisper](https://github.com/open
 
 The Whisper plugin analyses the text in the audio stream and generates markers corresponding to phrases, words or tokens (depending on the *Split Mode* parameter). The *Suppress Non-Speech Tokens* parameter controls whether non-speech tokens are generated (only usable with *Split Mode* on *Tokens*).
 
-The lightweight ggml-tiny model is embedded in the plugin (so you don’t have to download anything to start experimenting), but it is possible to download and use other models that may be more appropriate to your needs.
+The lightweight ggml-base-q5_1 model is embedded in the plugin and the other q5 models (tiny, small, medium, and large_v2) will be installed on your system. The *Model* parameter is used to select which model to use. You can also download and use other models that may be more appropriate to your needs. Please, refer to the following section dedicated to models.
 
 The Whisper Vamp Plugin has been designed for use in the free audio analysis application [Partiels](https://forum.ircam.fr/projects/detail/partiels/).
 
@@ -44,9 +44,9 @@ Use the installer for your operating system. The plugin dynamic library (*whispe
 
 ## Models
 
-By default, the plugin embeds the ggml-tiny model, which requires little space and offers fairly fast calculation but relatively unreliable results.  
+By default, the plugin embeds the ggml-base-q5_1, which requires little space and offers fairly fast calculation and the other q5 models (tiny, small, medium, large_v2, and large_v3) are installed on your system.
 
-It is possible to download other models that are potentially more robust. To do this, you can use the `download-ggml-model.sh/cmd` scripts from Georgi Gerganov's [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project and provided with the plugin package. Once downloaded, these models must be installed in the repository:
+It is possible to download other models that are potentially more robust or more adapted to your needs. To do this, you can use the `download-ggml-model.sh/cmd` scripts from Georgi Gerganov's [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project and provided with the plugin package. Once downloaded, these models must be installed in the repository:
 - Linux: `~/.config/Ircam/whispermodels` or `/opt/Ircam/whispermodels`
 - MacOS: `~/Library/Application Support/Ircam/whispermodels` or `/Library/Application Support/Ircam/whispermodels`
 - Windows: `\Documents and Settings\username\Application Data\Ircam\whispermodels` or `\Documents and Settings\All Users\Application Data\Ircam\whispermodels`
