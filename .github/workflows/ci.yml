@@ -36,6 +36,12 @@ jobs:
         path: ./build/source
         key: wvp-model-base-q5_1
         enableCrossOsArchive: true
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: ./build/models
+        key: wvp-models-q5
+        enableCrossOsArchive: true
     - name: Configure
       run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }}
   # Compiles, tests and packages the plugin for Ubuntu.
@@ -51,6 +57,12 @@ jobs:
       with:
         path: ./build/source
         key: wvp-model-base-q5_1
+        enableCrossOsArchive: true
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: ./build/models
+        key: wvp-models-q5
         enableCrossOsArchive: true
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Configure
@@ -87,6 +99,12 @@ jobs:
       with:
         path: ./build/source
         key: wvp-model-base-q5_1
+        enableCrossOsArchive: true
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: ./build/models
+        key: wvp-models-q5
         enableCrossOsArchive: true
     - name: Prepare
       run: powershell -Command "& {[System.IO.File]::WriteAllBytes('${{ github.workspace }}\cert.p12', [System.Convert]::FromBase64String('${{ secrets.SECTIGO_CERT_P12}}'))}"
@@ -125,6 +143,12 @@ jobs:
       with:
         path: ./build/source
         key: wvp-model-base-q5_1
+        enableCrossOsArchive: true
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: ./build/models
+        key: wvp-models-q5
         enableCrossOsArchive: true
     - name: Prepare
       run: |
@@ -180,6 +204,12 @@ jobs:
       with:
         path: ./build/source
         key: wvp-model-base-q5_1
+        enableCrossOsArchive: true
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: ./build/models
+        key: wvp-models-q5
         enableCrossOsArchive: true
     - name: Configure
       run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DBPVP_BUILD_TAG=${{ env.tag_name }}
