@@ -1,5 +1,6 @@
 #include "wvp.h"
 #include "wvp_model.h"
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <vamp-sdk/PluginAdapter.h>
