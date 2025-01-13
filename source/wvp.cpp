@@ -514,7 +514,7 @@ Wvp::Plugin::FeatureList Wvp::Plugin::getCurrentFeatures(size_t timeOffset)
                     feature.hasDuration = true;
                     feature.duration = Vamp::RealTime::fromSeconds(static_cast<double>(data.t1) / 100.0) - time;
                     feature.label = whisper_full_get_token_text(mHandle.get(), i, j);
-                    feature.values.push_back(data.p);
+                    feature.values.push_back(whisper_full_get_token_p(mHandle.get(), i, j));
                     fl.push_back(std::move(feature));
                 }
             }
