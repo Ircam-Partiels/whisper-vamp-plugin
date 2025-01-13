@@ -15,9 +15,6 @@ set(IVE_BUILD_PLUGIN_LIBRARY ON)
 add_subdirectory(ircam-vamp-extension EXCLUDE_FROM_ALL)
 
 ### Include Whisper ###
-include(FetchContent)
-find_package(Git REQUIRED)
-
 option(BUILD_SHARED_LIBS "ggml: build shared libraries" OFF)
 option(GGML_METAL_EMBED_LIBRARY "ggml: embed Metal library" ON)
 option(GGML_OPENMP "ggml: use OpenMP" OFF)
