@@ -462,7 +462,7 @@ Wvp::Plugin::FeatureList Wvp::Plugin::getCurrentFeatures(size_t timeOffset)
     params.print_timestamps = false;
     params.print_special = false;
     params.translate = false;
-    params.suppress_non_speech_tokens = mSuppressNonSpeechTokens;
+    params.suppress_nst = mSuppressNonSpeechTokens;
     params.language = nullptr;
     params.token_timestamps = mSplitMode >= 1;
     params.max_len = mSplitMode == 1;
