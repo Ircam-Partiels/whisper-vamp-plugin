@@ -153,19 +153,11 @@ target_compile_definitions(wvp PRIVATE WVP_PLUGIN_VERSION=${PROJECT_VERSION_MAJO
 set_target_properties(wvp PROPERTIES LIBRARY_OUTPUT_NAME ircamwhisper)
 vpp_add_plugin(wvp ${CMAKE_CURRENT_SOURCE_DIR}/resource/ircamwhisper.cat)
 
-find_program(PARTIELS_EXE "Partiels" HINTS ${PARTIELS_EXE_HINT_PATH} NO_CACHE)
+vpp_set_plugin_debug(wvp "${CMAKE_CURRENT_SOURCE_DIR}/test/whisper.ptldoc")
 if(PARTIELS_EXE)
-  if(NOT IS_DIRECTORY ${PARTIELS_EXE}) 
-    cmake_path(GET PARTIELS_EXE PARENT_PATH PARTIELS_EXE_PARENT)
-    cmake_path(SET PARTIELS_EXE NORMALIZE "${PARTIELS_EXE_PARENT}/../../")
-  endif()
-  message(STATUS "Debugging: " ${PARTIELS_EXE})
-  set_target_properties(wvp PROPERTIES XCODE_SCHEME_EXECUTABLE ${PARTIELS_EXE})
-  set_target_properties(wvp PROPERTIES XCODE_SCHEME_ARGUMENTS "${CMAKE_CURRENT_SOURCE_DIR}/test/whisper.ptldoc")
   set_target_properties(wvp PROPERTIES XCODE_SCHEME_ENVIRONMENT "VAMP_PATH=${CMAKE_CURRENT_BINARY_DIR}/Debug;WHISPERMODELPATH=/Users/guillot/Gitlab/IVP/whisper-vamp-plugin/whisper.cpp/models/ggml-base.bin")
 endif()
 
-vpp_set_plugin_debug(wvp "${CMAKE_CURRENT_SOURCE_DIR}/test/whisper.ptldoc")
 vpp_set_plugin_install(wvp)
 vpp_create_clang_format_targets(wvp ${WVP_SOURCES})
 
