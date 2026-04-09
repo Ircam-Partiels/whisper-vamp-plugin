@@ -23,7 +23,7 @@
 
 The Whisper plugin is an implementation of the [Whisper](https://github.com/openai/whisper) speech recognition model developed by [OpenAI](https://openai.com/) as a [Vamp plugin](https://www.vamp-plugins.org/).
 
-The Whisper plugin analyses the text in the audio stream and generates markers corresponding to phrases, words or tokens (depending on the *Split Mode* parameter). The *Suppress Non-Speech Tokens* parameter controls whether non-speech tokens are generated (only usable with *Split Mode* on *Tokens*).
+The plugin analyzes an audio stream and generates time-aligned markers for phrases, words, or tokens depending on the selected Split Mode, each with a transcription and confidence score. Accuracy depends on the chosen model size, with larger models providing better results. The language is automatically detected unless explicitly specified. The Suppress Non-Speech Tokens option removes non-speech tokens from the output and is only applicable when using token-level segmentation.
 
 The lightweight ggml-base-q5_1 model is embedded in the plugin and the other models will be installed on your system. The *Model* parameter is used to select which model to use. You can also download and use other models that may be more appropriate to your needs. Please, refer to the following section dedicated to models.
 
