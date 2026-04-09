@@ -228,7 +228,7 @@ std::string Wvp::Plugin::getName() const
 
 std::string Wvp::Plugin::getDescription() const
 {
-    return "Automatic speech recognition using OpenAI's Whisper model.";
+    return "Automatic speech recognition using OpenAI Whisper models. The plugin analyzes an audio stream and generates time-aligned markers for phrases, words, or tokens depending on the selected Split Mode, each with a transcription and confidence score. Accuracy depends on the chosen model size, with larger models providing better results. The language is automatically detected unless explicitly specified. The Suppress Non-Speech Tokens option removes non-speech tokens from the output and is only applicable when using token-level segmentation.";
 }
 
 std::string Wvp::Plugin::getMaker() const
