@@ -392,6 +392,24 @@ Wvp::Plugin::ParameterList Wvp::Plugin::getParameterDescriptors() const
         param.quantizeStep = 1.0f;
         list.push_back(std::move(param));
     }
+    {
+        ParameterDescriptor param;
+        param.identifier = "language";
+        param.name = "Language";
+        param.description = "The language spoken in the audio";
+        param.unit = "";
+        param.minValue = 0.0f;
+        param.maxValue = static_cast<float>(whisper_lang_max_id() + 1);
+        param.defaultValue = 0.0f;
+        param.isQuantized = true;
+        param.quantizeStep = 1.0f;
+        param.valueNames.push_back("auto-detect");
+        for(int i = 0; i <= whisper_lang_max_id(); ++i)
+        {
+            param.valueNames.push_back(whisper_lang_str_full(i));
+        }
+        list.push_back(std::move(param));
+    }
     return list;
 }
 
@@ -409,6 +427,11 @@ void Wvp::Plugin::setParameter(std::string paramid, float newval)
     else if(paramid == "suppressnonspeechtokens")
     {
         mSuppressNonSpeechTokens = newval > 0.5f;
+    }
+    else if(paramid == "language")
+    {
+        auto const max = static_cast<float>(whisper_lang_max_id() + 1);
+        mLanguage = static_cast<int>(std::floor(std::clamp(newval, 0.0f, max)));
     }
     else
     {
@@ -429,6 +452,10 @@ float Wvp::Plugin::getParameter(std::string paramid) const
     if(paramid == "suppressnonspeechtokens")
     {
         return mSuppressNonSpeechTokens ? 1.0f : 0.0f;
+    }
+    if(paramid == "language")
+    {
+        return static_cast<float>(mLanguage);
     }
     std::cerr << "Invalid parameter : " << paramid << "\n";
     return 0.0f;
@@ -463,7 +490,7 @@ Wvp::Plugin::FeatureList Wvp::Plugin::getCurrentFeatures(size_t timeOffset)
     params.print_special = false;
     params.translate = false;
     params.suppress_nst = mSuppressNonSpeechTokens;
-    params.language = nullptr;
+    params.language = mLanguage == 0 ? nullptr : whisper_lang_str(mLanguage - 1);
     params.token_timestamps = mSplitMode >= 1;
     params.max_len = mSplitMode == 1;
     params.split_on_word = mSplitMode == 1;

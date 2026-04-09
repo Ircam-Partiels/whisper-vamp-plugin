@@ -82,6 +82,7 @@ namespace Wvp
         size_t mModelIndex{0};
         size_t mSplitMode{2};
         bool mSuppressNonSpeechTokens{true};
+        int mLanguage{0};
         std::set<size_t> mRanges;
     };
 } // namespace Wvp
