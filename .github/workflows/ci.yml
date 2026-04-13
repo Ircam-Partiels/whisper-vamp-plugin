@@ -75,7 +75,7 @@ jobs:
     - name: Test
       run: ctest -C ${{ env.build_type }} -VV --test-dir ${{ github.workspace }}/build
     - name: Artifact
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: Whisper-Linux
         path: ${{ github.workspace }}/package/Whisper-Linux.tar.gz
@@ -116,7 +116,7 @@ jobs:
     - name: Test
       run: ctest -C ${{ env.build_type }} -VV --test-dir ${{ github.workspace }}/build
     - name: Artifact
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: Whisper-Windows
         path: ${{ github.workspace }}/package/Whisper-Windows.exe
@@ -174,7 +174,7 @@ jobs:
     - name: Test
       run: ctest -C ${{ env.build_type }} -VV --test-dir ${{ github.workspace }}/build
     - name: Artifact
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: Whisper-MacOS
         path: ${{ github.workspace }}/package/Whisper-MacOS.pkg
@@ -219,7 +219,7 @@ jobs:
         cmake --build build --target wvp_manual
         zip -jr Whisper-Manual.zip ${{ github.workspace }}/build/Manual
     - name: Artifact
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: Whisper-Manual
         path: ${{ github.workspace }}/build/Manual
