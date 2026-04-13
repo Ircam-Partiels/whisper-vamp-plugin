@@ -80,7 +80,7 @@ jobs:
         name: Whisper-Linux
         path: ${{ github.workspace }}/package/Whisper-Linux.tar.gz
     - name: Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       if: ${{ env.is_tagged == 'true' }}
       with:
         draft: true
@@ -121,7 +121,7 @@ jobs:
         name: Whisper-Windows
         path: ${{ github.workspace }}/package/Whisper-Windows.exe
     - name: Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       if: ${{ env.is_tagged == 'true' }}
       with:
         draft: true
@@ -179,7 +179,7 @@ jobs:
         name: Whisper-MacOS
         path: ${{ github.workspace }}/package/Whisper-MacOS.pkg
     - name: Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       if: ${{ env.is_tagged == 'true' }}
       with:
         draft: true
@@ -224,7 +224,7 @@ jobs:
         name: Whisper-Manual
         path: ${{ github.workspace }}/build/Manual
     - name: Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       if: ${{ env.is_tagged == 'true' }}
       with:
         draft: true
