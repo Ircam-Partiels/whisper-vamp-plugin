@@ -39,7 +39,7 @@ jobs:
       uses: actions/cache@v6
       with:
         path: ./build/models
-        key: wvp-models
+        key: wvp-models-${{ hashFiles('resource/models.txt') }}
         enableCrossOsArchive: true
     - name: Configure
       run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_MODELS_ONLY=ON
@@ -55,7 +55,7 @@ jobs:
       uses: actions/cache@v6
       with:
         path: ./build/models
-        key: wvp-models
+        key: wvp-models-${{ hashFiles('resource/models.txt') }}
         enableCrossOsArchive: true
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Sccache
@@ -102,7 +102,7 @@ jobs:
       uses: actions/cache@v6
       with:
         path: ./build/models
-        key: wvp-models
+        key: wvp-models-${{ hashFiles('resource/models.txt') }}
         enableCrossOsArchive: true
     - name: Developer Command Prompt
       uses: ilammy/msvc-dev-cmd@v1
@@ -154,7 +154,7 @@ jobs:
       uses: actions/cache@v6
       with:
         path: ./build/models
-        key: wvp-models
+        key: wvp-models-${{ hashFiles('resource/models.txt') }}
         enableCrossOsArchive: true
     - name: Prepare
       run: |
