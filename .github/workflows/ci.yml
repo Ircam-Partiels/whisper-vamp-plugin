@@ -11,8 +11,6 @@ env:
   is_tagged: ${{ startsWith(github.ref, 'refs/tags/') }}
   # The name of the version
   tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || ''}}
-  # Checks whether the models should be embedded in the package.
-  embed_models: ${{ startsWith(github.ref, 'refs/tags/') && 'ON' || 'OFF'}}
 
 jobs:
   # Checks source code formatting with clang before compiling.
@@ -26,8 +24,8 @@ jobs:
         clang-format-version: '19'
         check-path: '.'
         exclude-regex: 'whisper.cpp'
-  # Creates a cache for the model downloaded and transcribed 
-  # into the C++ file for embedding in the binary. 
+  # Creates a cache for the ggml models downloaded with the Whisper.cpp
+  # scripts and copied into the Resources folder of the Vamp bundle.
   Cache:
     runs-on: ubuntu-latest
     needs: Format
@@ -38,14 +36,8 @@ jobs:
     - name: Cache
       uses: actions/cache@v6
       with:
-        path: ./build/source
-        key: wvp-model-base-q5_1
-        enableCrossOsArchive: true
-    - name: Cache
-      uses: actions/cache@v6
-      with:
         path: ./build/models
-        key: wvp-models-q5
+        key: wvp-models
         enableCrossOsArchive: true
     - name: Configure
       run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }}
@@ -60,20 +52,14 @@ jobs:
     - name: Cache
       uses: actions/cache@v6
       with:
-        path: ./build/source
-        key: wvp-model-base-q5_1
-        enableCrossOsArchive: true
-    - name: Cache
-      uses: actions/cache@v6
-      with:
         path: ./build/models
-        key: wvp-models-q5
+        key: wvp-models
         enableCrossOsArchive: true
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Sccache
       uses: mozilla-actions/sccache-action@v0.0.11
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DCMAKE_C_COMPILER="/usr/bin/clang" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DWVP_USE_SCCACHE=ON -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
+      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DCMAKE_C_COMPILER="/usr/bin/clang" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DWVP_USE_SCCACHE=ON
     - name: Build
       run: cmake --build ${{ github.workspace }}/build
     - name: Test
@@ -113,14 +99,8 @@ jobs:
     - name: Cache
       uses: actions/cache@v6
       with:
-        path: ./build/source
-        key: wvp-model-base-q5_1
-        enableCrossOsArchive: true
-    - name: Cache
-      uses: actions/cache@v6
-      with:
         path: ./build/models
-        key: wvp-models-q5
+        key: wvp-models
         enableCrossOsArchive: true
     - name: Developer Command Prompt
       uses: ilammy/msvc-dev-cmd@v1
@@ -130,7 +110,7 @@ jobs:
     - name: Sccache
       uses: mozilla-actions/sccache-action@v0.0.11
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG="${{ env.tag_name }}" -DWVP_ENABLE_DEBUG=OFF -DWVP_USE_SCCACHE=ON -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
+      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG="${{ env.tag_name }}" -DWVP_ENABLE_DEBUG=OFF -DWVP_USE_SCCACHE=ON
     - name: Build
       run: cmake --build ${{ github.workspace }}/build
     - name: Test
@@ -171,14 +151,8 @@ jobs:
     - name: Cache
       uses: actions/cache@v6
       with:
-        path: ./build/source
-        key: wvp-model-base-q5_1
-        enableCrossOsArchive: true
-    - name: Cache
-      uses: actions/cache@v6
-      with:
         path: ./build/models
-        key: wvp-models-q5
+        key: wvp-models
         enableCrossOsArchive: true
     - name: Prepare
       run: |
@@ -197,7 +171,7 @@ jobs:
     - name: Sccache
       uses: mozilla-actions/sccache-action@v0.0.11
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -G Ninja -DVPP_CODESIGN_APPLE_KEYCHAIN_PROFILE_INSTALLER="notary-installer" -DVPP_NOTARIZE=ON -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DWVP_USE_SCCACHE=ON -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
+      run: cmake -B ${{ github.workspace }}/build -G Ninja -DVPP_CODESIGN_APPLE_KEYCHAIN_PROFILE_INSTALLER="notary-installer" -DVPP_NOTARIZE=ON -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DWVP_USE_SCCACHE=ON
     - name: Build
       run: |
         security unlock-keychain -p ${{ secrets.DEV_ID_PASSWORD }} buildagent
@@ -244,17 +218,11 @@ jobs:
     - name: Cache
       uses: actions/cache@v6
       with:
-        path: ./build/source
-        key: wvp-model-base-q5_1
-        enableCrossOsArchive: true
-    - name: Cache
-      uses: actions/cache@v6
-      with:
         path: ./build/models
-        key: wvp-models-q5
+        key: wvp-models
         enableCrossOsArchive: true
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG=${{ env.tag_name }} -DEMBEDDED_MODELS_IN_PACKAGE=OFF
+      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG=${{ env.tag_name }}
     - name: Build
       run: |
         cmake --build build --target wvp_manual

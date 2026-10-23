@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.18)
 cmake_policy(SET CMP0091 NEW)
 
 option(WVP_ENABLE_DEBUG "Enables the debug scheme using the Partiels application" ON)
-option(EMBEDDED_MODELS_IN_PACKAGE "Embeds the models in the package" ON)
 
 set(WVP_TESTER_ENABLE ON CACHE STRING "Enables the tests with the vamp plugin tester")
 set(WVP_TESTER_TIMEOUT 600 CACHE STRING "The timeout in seconds of the test with the vamp plugin tester (zero for no timeout)")
@@ -106,69 +105,34 @@ set(VPP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/package CACHE PATH "The directory of the
 include(vamp-plugin-packager/vamp-plugin-packager.cmake)
 
 ### Source ###
-if(EMBEDDED_MODELS_IN_PACKAGE)
-  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/models")
-  foreach(WVP_MODEL_CAPACITY IN ITEMS "tiny-q5_1" "small-q5_1" "medium-q5_0" "large-v2-q5_0")
-    set(WVP_MODEL_PATH "${CMAKE_CURRENT_BINARY_DIR}/models/ggml-${WVP_MODEL_CAPACITY}.bin")
-    if(NOT EXISTS ${WVP_MODEL_PATH})
-      message(STATUS "Downloading model ggml-${WVP_MODEL_CAPACITY}.bin")
-      if(WIN32)
-        execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.cmd ${WVP_MODEL_CAPACITY})
-      else()
-        execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.sh ${WVP_MODEL_CAPACITY})
-      endif()
-      file(COPY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/ggml-${WVP_MODEL_CAPACITY}.bin" ${WVP_MODEL_PATH})
-      file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/ggml-${WVP_MODEL_CAPACITY}.bin")
-    endif()
-    if(APPLE)
-      vpp_add_file(${WVP_MODEL_PATH} "/Library/Application Support/Ircam/whispermodels")
-    elseif(WIN32)
-      vpp_add_file(${WVP_MODEL_PATH} "{commonappdata}\\Ircam\\whispermodels")
-    elseif(UNIX)
-      vpp_add_file(${WVP_MODEL_PATH} "$HOME/.config/Ircam/whispermodels")
-    endif()
-  endforeach()
-endif()
 
-set(WVP_MODEL_CPP ${CMAKE_CURRENT_BINARY_DIR}/source/wvp_model.cpp)
-set(WVP_MODEL_H ${CMAKE_CURRENT_SOURCE_DIR}/source/wvp_model.h)
-if(NOT EXISTS ${WVP_MODEL_CPP})
-  if(WIN32)
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.cmd base-q5_1)
-  else()
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.sh base-q5_1)
+### Models ###
+# The ggml models are not compiled into the plugin: they are downloaded here
+# and copied into the Resources folder of the Vamp bundle (see the POST_BUILD command).
+set(WVP_MODELS_DIR "${CMAKE_CURRENT_BINARY_DIR}/models")
+file(MAKE_DIRECTORY "${WVP_MODELS_DIR}")
+foreach(WVP_MODEL_CAPACITY IN ITEMS "base-q5_1" "tiny-q5_1" "small-q5_1" "medium-q5_0" "large-v2-q5_0")
+  set(WVP_MODEL_PATH "${WVP_MODELS_DIR}/ggml-${WVP_MODEL_CAPACITY}.bin")
+  if(NOT EXISTS ${WVP_MODEL_PATH})
+    message(STATUS "Downloading model ggml-${WVP_MODEL_CAPACITY}.bin")
+    if(WIN32)
+      execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.cmd ${WVP_MODEL_CAPACITY})
+    else()
+      execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.sh ${WVP_MODEL_CAPACITY})
+    endif()
+    file(COPY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/ggml-${WVP_MODEL_CAPACITY}.bin" ${WVP_MODEL_PATH})
+    file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/ggml-${WVP_MODEL_CAPACITY}.bin")
   endif()
-  set(WVP_MODEL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/ggml-base-q5_1.bin")
-  file(RELATIVE_PATH  WVP_MODEL_HREL "${CMAKE_CURRENT_BINARY_DIR}/source" ${WVP_MODEL_H})
-  file(WRITE ${WVP_MODEL_CPP} "#include \"${WVP_MODEL_HREL}\"\n\n")
-
-  if(EXISTS ${WVP_MODEL_PATH})
-    message(STATUS "Generating default model ${WVP_MODEL_PATH}")
-    file(READ ${WVP_MODEL_PATH} WVP_HEX_DATA HEX)
-    string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," WVP_HEX_DATA ${WVP_HEX_DATA})
-    file(APPEND ${WVP_MODEL_CPP} "namespace Wvp\n{\n")
-    file(APPEND ${WVP_MODEL_CPP} "static const unsigned char binary_data[] =\n{\n")
-    file(APPEND ${WVP_MODEL_CPP} "${WVP_HEX_DATA}")
-    file(APPEND ${WVP_MODEL_CPP} "};\n}\n\n")
-    file(APPEND ${WVP_MODEL_CPP} "const void* Wvp::model = (const void*)Wvp::binary_data;\n")
-    file(APPEND ${WVP_MODEL_CPP} "const size_t Wvp::model_size = sizeof(Wvp::binary_data);\n")
-  else()
-    message(WARNING "Default model ${WVP_MODEL_PATH} invalid")
-    file(APPEND ${WVP_MODEL_CPP} "const void* Wvp::model = nullptr;\n")
-    file(APPEND ${WVP_MODEL_CPP} "const size_t Wvp::model_size = 0;\n")
-  endif()
-    file(APPEND ${WVP_MODEL_CPP} "\n")
-endif()
+endforeach()
 
 file(GLOB WVP_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/source/wvp.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/source/wvp.h
-  ${WVP_MODEL_H}
 )
 source_group("sources" FILES ${WVP_SOURCES})
 
 ### Target ###
-add_library(wvp MODULE ${WVP_SOURCES} ${WVP_MODEL_CPP})
+add_library(wvp MODULE ${WVP_SOURCES})
 ive_prepare_plugin_target(wvp)
 target_link_libraries(wvp PRIVATE whisper)
 
@@ -185,11 +149,15 @@ vpp_add_plugin(wvp
   DEBUG ${WVP_ENABLE_DEBUG}
   DEBUG_DOCUMENT ${CMAKE_CURRENT_SOURCE_DIR}/test/whisper.ptldoc
   # The test C1 (Normal input) is sufficient to check that the plugin loads (no
-  # dependency issues), that the embedded model is loaded and that the inference
-  # runs, without testing all the configurations that take long.
+  # dependency issues), that the ggml models of the bundle are loaded and that
+  # the inference runs, without testing all the configurations that take long.
   TESTER ${WVP_TESTER_ENABLE}
   TESTER_ARGUMENTS -a -t C1
   TESTER_TIMEOUT ${WVP_TESTER_TIMEOUT}
+)
+
+add_custom_command(TARGET wvp POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory "${WVP_MODELS_DIR}" "$<TARGET_FILE_DIR:wvp>/../Resources/models"
 )
 
 vpp_create_clang_format_targets(wvp ${WVP_SOURCES})
@@ -203,8 +171,6 @@ string(REPLACE "APPVERSION" "${WVP_BUILD_TAG} (${GIT_COMMIT_ID})" MANUAL_CONTENT
 string(REPLACE "src=\"../resource/" "src=\"${CMAKE_CURRENT_SOURCE_DIR}/resource/" MANUAL_CONTENT ${MANUAL_CONTENT})
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/whisper-manual.md ${MANUAL_CONTENT})
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.cmd DESTINATION ${WVP_MANUAL_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.sh DESTINATION ${WVP_MANUAL_DIR})
 find_program(MDPDF_EXE "mdpdf")
 if(MDPDF_EXE)
   add_custom_target(wvp_manual COMMAND ${MDPDF_EXE} ${CMAKE_CURRENT_BINARY_DIR}/whisper-manual.md ${WVP_MANUAL_DIR}/whisper-manual.pdf VERBATIM)
