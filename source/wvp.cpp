@@ -122,7 +122,7 @@ namespace Wvp
     // would break the existing documents.
     static std::vector<std::filesystem::path> getModelPaths()
     {
-        static auto const capacities = std::array<std::string_view, 5>{"base-q5_1", "tiny-q5_1", "small-q5_1", "medium-q5_0", "large-v2-q5_0"};
+        static auto const capacities = std::array<std::string_view, 5>{"base-q5_1", "tiny-q5_1", "small-q5_1", "medium-q5_0", "large-v3-turbo-q5_0"};
         auto const modelsDir = getContentsDir() / "Resources" / "models";
         auto const modelPath = [modelsDir](std::string_view capacity)
         {
