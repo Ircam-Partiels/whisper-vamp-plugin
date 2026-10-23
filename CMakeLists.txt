@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.18)
 cmake_policy(SET CMP0091 NEW)
 
-set(IGNORE_VAMP_PLUGIN_TESTER OFF CACHE STRING "Disables the tests with vamp plugin tester")
-set(PARTIELS_EXE_HINT_PATH "/Applications" CACHE PATH "")
+option(WVP_ENABLE_DEBUG "Enables the debug scheme using the Partiels application" ON)
 option(EMBEDDED_MODELS_IN_PACKAGE "Embeds the models in the package" ON)
+
+set(WVP_TESTER_ENABLE ON CACHE STRING "Enables the tests with the vamp plugin tester")
+set(WVP_TESTER_TIMEOUT 600 CACHE STRING "The timeout in seconds of the test with the vamp plugin tester (zero for no timeout)")
 
 set(CMAKE_XCODE_GENERATE_SCHEME ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "Minimum OS X deployment version")
@@ -145,24 +147,31 @@ file(GLOB WVP_SOURCES
 source_group("sources" FILES ${WVP_SOURCES})
 
 ### Target ###
-add_library(wvp SHARED ${WVP_SOURCES} ${WVP_MODEL_CPP})
+add_library(wvp MODULE ${WVP_SOURCES} ${WVP_MODEL_CPP})
 ive_prepare_plugin_target(wvp)
 target_link_libraries(wvp PRIVATE whisper)
-target_compile_definitions(wvp PRIVATE WVP_PLUGIN_VERSION=${PROJECT_VERSION_MAJOR})
 
-set_target_properties(wvp PROPERTIES LIBRARY_OUTPUT_NAME ircamwhisper)
-vpp_add_plugin(wvp ${CMAKE_CURRENT_SOURCE_DIR}/resource/ircamwhisper.cat)
-
-vpp_set_plugin_debug(wvp "${CMAKE_CURRENT_SOURCE_DIR}/test/whisper.ptldoc")
-if(PARTIELS_EXE)
-  set_target_properties(wvp PROPERTIES XCODE_SCHEME_ENVIRONMENT "VAMP_PATH=${CMAKE_CURRENT_BINARY_DIR}/Debug;WHISPERMODELPATH=/Users/guillot/Gitlab/IVP/whisper-vamp-plugin/whisper.cpp/models/ggml-base.bin")
+if(WVP_TESTER_ENABLE)
+  enable_testing()
 endif()
 
-vpp_set_plugin_install(wvp)
-vpp_create_clang_format_targets(wvp ${WVP_SOURCES})
+vpp_add_plugin(wvp
+  OUTPUT_NAME ircamwhisper
+  CATFILE ${CMAKE_CURRENT_SOURCE_DIR}/resource/ircamwhisper.cat
+  COPYRIGHT "Copyright 2026 Ircam. All rights reserved"
+  VERSION ${PROJECT_VERSION_MAJOR}
+  INSTALL ON
+  DEBUG ${WVP_ENABLE_DEBUG}
+  DEBUG_DOCUMENT ${CMAKE_CURRENT_SOURCE_DIR}/test/whisper.ptldoc
+  # The test C1 (Normal input) is sufficient to check that the plugin loads (no
+  # dependency issues), that the embedded model is loaded and that the inference
+  # runs, without testing all the configurations that take long.
+  TESTER ${WVP_TESTER_ENABLE}
+  TESTER_ARGUMENTS -a -t C1
+  TESTER_TIMEOUT ${WVP_TESTER_TIMEOUT}
+)
 
-enable_testing()
-vpp_enable_vamp_plugin_tester()
+vpp_create_clang_format_targets(wvp ${WVP_SOURCES})
 
 ### Manual ###
 set(WVP_MANUAL_DIR ${CMAKE_CURRENT_BINARY_DIR}/Manual)
@@ -185,7 +194,7 @@ endif()
 ### Publishing ###
 set(PROJECT_URL "https://github.com/Ircam-Partiels/whisper-vamp-plugin")
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "## Downloads\n")
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Linux.tar.gz](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Linux.tar.gz)\n")
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Linux.zip](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Linux.zip)\n")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-MacOS.pkg](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-MacOS.pkg)\n")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Windows.exe](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Windows.exe)\n")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Manual.zip](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Manual.zip)\n") 

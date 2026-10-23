@@ -49,7 +49,7 @@ jobs:
       run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }}
   # Compiles, tests and packages the plugin for Ubuntu.
   Ubuntu:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: Cache
     steps:
     - uses: actions/checkout@v7
@@ -69,16 +69,23 @@ jobs:
         enableCrossOsArchive: true
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DCMAKE_C_COMPILER="/usr/bin/clang" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DWVP_BUILD_TAG=${{ env.tag_name }} -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
+      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DCMAKE_C_COMPILER="/usr/bin/clang" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
     - name: Build
       run: cmake --build ${{ github.workspace }}/build
     - name: Test
       run: ctest -C ${{ env.build_type }} -VV --test-dir ${{ github.workspace }}/build
+    - name: Package
+      run: cmake -E chdir ${{ github.workspace }}/build/${{ env.build_type }} cmake -E tar cf ${{ github.workspace }}/Whisper-Vamp-Linux.zip --format=zip ircamwhisper.vamp
+    - name: Artifact
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: Whisper-Vamp-Linux
+        path: ${{ github.workspace }}/Whisper-Vamp-Linux.zip
     - name: Artifact
       uses: actions/upload-artifact@v7.0.2
       with:
         name: Whisper-Linux
-        path: ${{ github.workspace }}/package/Whisper-Linux.tar.gz
+        path: ${{ github.workspace }}/build/Whisper
     - name: Release
       uses: softprops/action-gh-release@v3
       if: ${{ env.is_tagged == 'true' }}
@@ -88,7 +95,9 @@ jobs:
         fail_on_unmatched_files: true
         generate_release_notes: true
         body_path: ${{ github.workspace }}/build/whisper-release.md
-        files: ${{ github.workspace }}/package/Whisper-Linux.tar.gz
+        files: |
+          ${{ github.workspace }}/package/Whisper-Linux.zip
+          ${{ github.workspace }}/Whisper-Vamp-Linux.zip
   # Compiles, tests and packages the plugin for Windows.
   Windows:
     runs-on: windows-latest
@@ -109,12 +118,24 @@ jobs:
         path: ./build/models
         key: wvp-models-q5
         enableCrossOsArchive: true
+    - name: Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+    - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -G "Visual Studio 18 2026" -A x64 -DWVP_BUILD_TAG="${{ env.tag_name }}" -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
+      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG="${{ env.tag_name }}" -DWVP_ENABLE_DEBUG=OFF -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
     - name: Build
-      run: cmake --build ${{ github.workspace }}/build --config ${{ env.build_type }}
+      run: cmake --build ${{ github.workspace }}/build
     - name: Test
       run: ctest -C ${{ env.build_type }} -VV --test-dir ${{ github.workspace }}/build
+    - name: Package
+      run: cmake -E chdir ${{ github.workspace }}/build/${{ env.build_type }} cmake -E tar cf ${{ github.workspace }}/Whisper-Vamp-Windows.zip --format=zip ircamwhisper.vamp
+    - name: Artifact
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: Whisper-Vamp-Windows
+        path: ${{ github.workspace }}/Whisper-Vamp-Windows.zip
     - name: Artifact
       uses: actions/upload-artifact@v7.0.2
       with:
@@ -129,7 +150,9 @@ jobs:
         fail_on_unmatched_files: true
         generate_release_notes: true
         body_path: ${{ github.workspace }}/build/whisper-release.md
-        files: ${{ github.workspace }}/package/Whisper-Windows.exe
+        files: |
+          ${{ github.workspace }}/package/Whisper-Windows.exe
+          ${{ github.workspace }}/Whisper-Vamp-Windows.zip
   # Compiles, tests and packages the plugin for MacOS.
   MacOS:
     runs-on: macos-latest
@@ -164,15 +187,23 @@ jobs:
         rm ./cert.p12
         security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k ${{ secrets.DEV_ID_PASSWORD }} buildagent >/dev/null
         xcrun notarytool store-credentials "notary-installer" --apple-id ${{ secrets.DEV_USER_APPLE_ID }} --team-id ${{ secrets.DEV_TEAM_APPLE_ID }} --password ${{ secrets.DEV_SPEC_APP_PASSWORD }} >/dev/null
+    - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -G "Xcode" -DVPP_CODESIGN_APPLE_KEYCHAIN_PROFILE_INSTALLER="notary-installer" -DVPP_NOTARIZE=ON -DWVP_BUILD_TAG=${{ env.tag_name }} -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
+      run: cmake -B ${{ github.workspace }}/build -G Ninja -DVPP_CODESIGN_APPLE_KEYCHAIN_PROFILE_INSTALLER="notary-installer" -DVPP_NOTARIZE=ON -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
     - name: Build
       run: |
         security unlock-keychain -p ${{ secrets.DEV_ID_PASSWORD }} buildagent
         security set-keychain-settings -lut 7200 buildagent
-        set -o pipefail && cmake --build ${{ github.workspace }}/build --config ${{ env.build_type }} | xcbeautify --renderer github-actions --disable-logging
+        cmake --build ${{ github.workspace }}/build
     - name: Test
       run: ctest -C ${{ env.build_type }} -VV --test-dir ${{ github.workspace }}/build
+    - name: Package
+      run: cmake -E chdir ${{ github.workspace }}/build/${{ env.build_type }} cmake -E tar cf ${{ github.workspace }}/Whisper-Vamp-MacOS.zip --format=zip ircamwhisper.vamp
+    - name: Artifact
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: Whisper-Vamp-MacOS
+        path: ${{ github.workspace }}/Whisper-Vamp-MacOS.zip
     - name: Artifact
       uses: actions/upload-artifact@v7.0.2
       with:
@@ -187,7 +218,9 @@ jobs:
         fail_on_unmatched_files: true
         generate_release_notes: true
         body_path: ${{ github.workspace }}/build/whisper-release.md
-        files: ${{ github.workspace }}/package/Whisper-MacOS.pkg
+        files: |
+          ${{ github.workspace }}/package/Whisper-MacOS.pkg
+          ${{ github.workspace }}/Whisper-Vamp-MacOS.zip
   # Generates the documentation.
   Doc:
     runs-on: ubuntu-latest

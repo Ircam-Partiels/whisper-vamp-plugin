@@ -238,7 +238,7 @@ std::string Wvp::Plugin::getMaker() const
 
 int Wvp::Plugin::getPluginVersion() const
 {
-    return WVP_PLUGIN_VERSION;
+    return PLUGIN_VERSION;
 }
 
 std::string Wvp::Plugin::getCopyright() const
