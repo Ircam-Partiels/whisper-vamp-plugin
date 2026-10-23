@@ -54,13 +54,12 @@
       </defaultState>
       <parameters>
         <value identifier="model" name="Model" description="The model used to generate the tokens"
-               unit="" minValue="0.0" maxValue="5.0" defaultValue="0.0" isQuantized="1"
+               unit="" minValue="0.0" maxValue="4.0" defaultValue="0.0" isQuantized="1"
                quantizeStep="1.0">
           <valueNames value="ggml-base-q5_1 (embedded)"/>
           <valueNames value="ggml-medium-q5_0"/>
           <valueNames value="ggml-tiny-q5_1"/>
           <valueNames value="ggml-small-q5_1"/>
-          <valueNames value="ggml-large-v2-q5_0"/>
           <valueNames value="ggml-large-v3-turbo-q5_0"/>
         </value>
       </parameters>

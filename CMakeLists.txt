@@ -129,7 +129,7 @@ if(NOT WVP_MANUAL_ONLY)
 # and copied into the Resources folder of the Vamp bundle (see the POST_BUILD command).
 set(WVP_MODELS_DIR "${CMAKE_CURRENT_BINARY_DIR}/models")
 file(MAKE_DIRECTORY "${WVP_MODELS_DIR}")
-foreach(WVP_MODEL_CAPACITY IN ITEMS "base-q5_1" "tiny-q5_1" "small-q5_1" "medium-q5_0" "large-v2-q5_0")
+foreach(WVP_MODEL_CAPACITY IN ITEMS "base-q5_1" "tiny-q5_1" "small-q5_1" "medium-q5_0" "large-v3-turbo-q5_0")
   set(WVP_MODEL_PATH "${WVP_MODELS_DIR}/ggml-${WVP_MODEL_CAPACITY}.bin")
   if(NOT EXISTS ${WVP_MODEL_PATH})
     message(STATUS "Downloading model ggml-${WVP_MODEL_CAPACITY}.bin")
