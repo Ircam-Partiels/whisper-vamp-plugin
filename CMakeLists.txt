@@ -125,21 +125,32 @@ endif()
 
 if(NOT WVP_MANUAL_ONLY)
 ### Models ###
-# The ggml models are not compiled into the plugin: they are downloaded here
-# and copied into the Resources folder of the Vamp bundle (see the POST_BUILD command).
+# The ggml models are not compiled into the plugin: they are listed in the
+# resource/models.txt file, downloaded here and copied into the Resources folder
+# of the Vamp bundle (see the POST_BUILD command).
+# The order of the models in this file must remain identical to the order of the
+# capacities in the getModelPaths method of the source/wvp.cpp file because the
+# index of the model is saved in the documents of the hosts. The CI caches the
+# downloaded models with a key that depends on this file (see the workflows),
+# hence modifying the list of the models invalidates the cache.
 set(WVP_MODELS_DIR "${CMAKE_CURRENT_BINARY_DIR}/models")
 file(MAKE_DIRECTORY "${WVP_MODELS_DIR}")
-foreach(WVP_MODEL_CAPACITY IN ITEMS "base-q5_1" "tiny-q5_1" "small-q5_1" "medium-q5_0" "large-v3-turbo-q5_0")
+file(TO_NATIVE_PATH "${WVP_MODELS_DIR}" WVP_MODELS_NATIVE_DIR)
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/resource/models.txt" WVP_MODEL_CAPACITIES)
+foreach(WVP_MODEL_CAPACITY IN LISTS WVP_MODEL_CAPACITIES)
   set(WVP_MODEL_PATH "${WVP_MODELS_DIR}/ggml-${WVP_MODEL_CAPACITY}.bin")
-  if(NOT EXISTS ${WVP_MODEL_PATH})
+  if(NOT EXISTS "${WVP_MODEL_PATH}")
     message(STATUS "Downloading model ggml-${WVP_MODEL_CAPACITY}.bin")
     if(WIN32)
-      execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.cmd ${WVP_MODEL_CAPACITY})
+      execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.cmd" ${WVP_MODEL_CAPACITY} ${WVP_MODELS_NATIVE_DIR})
     else()
-      execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.sh ${WVP_MODEL_CAPACITY})
+      execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/download-ggml-model.sh" ${WVP_MODEL_CAPACITY} ${WVP_MODELS_NATIVE_DIR})
     endif()
-    file(COPY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/ggml-${WVP_MODEL_CAPACITY}.bin" ${WVP_MODEL_PATH})
-    file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/ggml-${WVP_MODEL_CAPACITY}.bin")
+    # The download scripts do not always return a non-zero result on failure,
+    # hence the model file is checked after running them.
+    if(NOT EXISTS "${WVP_MODEL_PATH}")
+      message(FATAL_ERROR "Failed to download the model ggml-${WVP_MODEL_CAPACITY}.bin in ${WVP_MODELS_DIR}")
+    endif()
   endif()
 endforeach()
 endif()
