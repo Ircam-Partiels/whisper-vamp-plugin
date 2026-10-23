@@ -1,28 +1,22 @@
 #include "wvp.h"
-#include "wvp_model.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <filesystem>
+#include <string>
+#include <string_view>
 #include <vamp-sdk/PluginAdapter.h>
+
+#if !defined(_WIN32)
+#include <dlfcn.h>
+#else
+#include <Windows.h>
+#endif
 
 #if defined(_MSC_VER)
 #define forcedinline __forceinline
 #else
 #define forcedinline inline __attribute__((always_inline))
-#endif
-
-#if _WIN32
-#include <Windows.h>
-#include <shlobj.h>
-static std::string getSpecialFolderPath(int type)
-{
-    char path[MAX_PATH + 256];
-    if(SHGetSpecialFolderPathA(nullptr, path, type, FALSE))
-    {
-        return std::string(path);
-    }
-    return {};
-}
 #endif
 
 namespace ResamplerUtils
@@ -68,6 +62,40 @@ namespace ResamplerUtils
 
 namespace Wvp
 {
+    static std::filesystem::path getContentsDir()
+    {
+        static auto const dir = []() -> std::filesystem::path
+        {
+#if !defined(_WIN32)
+            Dl_info info;
+            if(dladdr(reinterpret_cast<void const*>(&getContentsDir), &info) != 0 && info.dli_fname != nullptr)
+            {
+                return std::filesystem::absolute(std::filesystem::path(info.dli_fname)).parent_path().parent_path();
+            }
+#else
+            HMODULE module = nullptr;
+            if(GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, reinterpret_cast<LPWSTR>(&getContentsDir), &module) != 0)
+            {
+                std::vector<wchar_t> filename(MAX_PATH);
+                auto capacity = static_cast<DWORD>(filename.size());
+                auto length = GetModuleFileNameW(module, filename.data(), capacity);
+                while(length == capacity)
+                {
+                    filename.resize(filename.size() * 2);
+                    capacity = static_cast<DWORD>(filename.size());
+                    length = GetModuleFileNameW(module, filename.data(), capacity);
+                }
+                if(length != 0)
+                {
+                    return std::filesystem::path(filename.data()).parent_path().parent_path();
+                }
+            }
+#endif
+            return std::filesystem::current_path() / "Contents";
+        }();
+        return dir;
+    }
+
     static std::vector<std::filesystem::path> getModelPaths(std::filesystem::path const& path)
     {
         if(std::filesystem::exists(path))
@@ -85,44 +113,39 @@ namespace Wvp
         return {};
     }
 
+    // The order of the models must remain identical to the previous versions of
+    // the plugin: the ggml-base-q5_1 model was embedded in the binary and was
+    // always the first model of the list, followed by the models of the
+    // WHISPERMODELSPATH environment variable and by the models installed on the
+    // system (tiny, small, medium and large in this order). The index of the
+    // model is saved in the documents of the hosts, hence changing the order
+    // would break the existing documents.
     static std::vector<std::filesystem::path> getModelPaths()
     {
+        static auto const capacities = std::array<std::string_view, 5>{"base-q5_1", "tiny-q5_1", "small-q5_1", "medium-q5_0", "large-v2-q5_0"};
+        auto const modelsDir = getContentsDir() / "Resources" / "models";
+        auto const modelPath = [modelsDir](std::string_view capacity)
+        {
+            return modelsDir / ("ggml-" + std::string(capacity) + ".bin");
+        };
         std::vector<std::filesystem::path> allPaths;
+        if(std::filesystem::exists(modelPath(capacities.front())))
+        {
+            allPaths.push_back(modelPath(capacities.front()));
+        }
         if(auto const* envModelPath = std::getenv("WHISPERMODELSPATH"))
         {
-            auto const path = getModelPaths(std::filesystem::path{envModelPath});
-            allPaths.insert(allPaths.cend(), path.cbegin(), path.cend());
+            auto const envPaths = getModelPaths(std::filesystem::path{envModelPath});
+            allPaths.insert(allPaths.cend(), envPaths.cbegin(), envPaths.cend());
         }
-#ifdef __APPLE__
-        if(auto const* userPath = std::getenv("HOME"))
+        for(auto it = capacities.cbegin() + 1; it != capacities.cend(); ++it)
         {
-            auto const path = getModelPaths({std::filesystem::path(userPath) / "Library/Application Support/Ircam/whispermodels"});
-            allPaths.insert(allPaths.cend(), path.cbegin(), path.cend());
+            auto const path = modelPath(*it);
+            if(std::filesystem::exists(path))
+            {
+                allPaths.push_back(path);
+            }
         }
-        auto const path = getModelPaths({"/Library/Application Support/Ircam/whispermodels"});
-        allPaths.insert(allPaths.cend(), path.cbegin(), path.cend());
-#elif __linux__
-        if(auto const* userPath = std::getenv("HOME"))
-        {
-            auto const path = getModelPaths({std::filesystem::path(userPath) / ".config/Ircam/whispermodels"});
-            allPaths.insert(allPaths.cend(), path.cbegin(), path.cend());
-        }
-        auto const path = getModelPaths({"/opt/Ircam/whispermodels"});
-        allPaths.insert(allPaths.cend(), path.cbegin(), path.cend());
-#elif _WIN32
-        auto const userPath = getSpecialFolderPath(CSIDL_APPDATA);
-        if(!userPath.empty())
-        {
-            auto const path = getModelPaths({std::filesystem::path(userPath) / "Ircam/whispermodels"});
-            allPaths.insert(allPaths.cend(), path.cbegin(), path.cend());
-        }
-        auto const commonPath = getSpecialFolderPath(CSIDL_COMMON_APPDATA);
-        if(!commonPath.empty())
-        {
-            auto const path = getModelPaths({std::filesystem::path(commonPath) / "Ircam/whispermodels"});
-            allPaths.insert(allPaths.cend(), path.cbegin(), path.cend());
-        }
-#endif
         return allPaths;
     }
 } // namespace Wvp
@@ -315,15 +338,11 @@ void Wvp::Plugin::reset()
 {
     auto const createContext = [this]() -> struct whisper_context*
     {
-        auto params = whisper_context_default_params();
-        if(mModelIndex == 0)
-        {
-            return whisper_init_from_buffer_with_params(const_cast<void*>(Wvp::model), Wvp::model_size, params);
-        }
         auto const models = getModelPaths();
-        if(mModelIndex <= models.size())
+        if(mModelIndex < models.size())
         {
-            auto const path = models.at(mModelIndex - 1).string();
+            auto params = whisper_context_default_params();
+            auto const path = models.at(mModelIndex).string();
             return whisper_init_from_file_with_params(path.c_str(), params);
         }
         return nullptr;
@@ -353,13 +372,12 @@ Wvp::Plugin::ParameterList Wvp::Plugin::getParameterDescriptors() const
         param.name = "Model";
         param.description = "The model used to generate the tokens";
         param.unit = "";
-        param.valueNames.push_back("ggml-base-q5_1 (embedded)");
         for(auto const& model : models)
         {
             param.valueNames.push_back(model.filename().replace_extension().string());
         }
         param.minValue = 0.0f;
-        param.maxValue = static_cast<float>(models.size());
+        param.maxValue = static_cast<float>(models.size() - 1);
         param.defaultValue = 0.0f;
         param.isQuantized = true;
         param.quantizeStep = 1.0f;
@@ -417,8 +435,12 @@ void Wvp::Plugin::setParameter(std::string paramid, float newval)
 {
     if(paramid == "model")
     {
-        auto const max = static_cast<float>(getModelPaths().size());
-        mModelIndex = static_cast<size_t>(std::floor(std::clamp(newval, 0.0f, max)));
+        auto const models = getModelPaths();
+        if(!models.empty())
+        {
+            auto const max = static_cast<float>(models.size() - 1);
+            mModelIndex = static_cast<size_t>(std::floor(std::clamp(newval, 0.0f, max)));
+        }
     }
     else if(paramid == "splitmode")
     {

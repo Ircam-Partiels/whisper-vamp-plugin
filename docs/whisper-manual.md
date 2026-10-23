@@ -25,7 +25,7 @@ The Whisper plugin is an implementation of the [Whisper](https://github.com/open
 
 The plugin analyzes an audio stream and generates time-aligned markers for phrases, words, or tokens depending on the selected Split Mode, each with a transcription and confidence score. Accuracy depends on the chosen model size, with larger models providing better results. The language is automatically detected unless explicitly specified. The Suppress Non-Speech Tokens option removes non-speech tokens from the output and is only applicable when using token-level segmentation.
 
-The lightweight ggml-base-q5_1 model is embedded in the plugin and the other models will be installed on your system. The *Model* parameter is used to select which model to use. You can also download and use other models that may be more appropriate to your needs. Please, refer to the following section dedicated to models.
+The ggml-base-q5_1, ggml-tiny-q5_1, ggml-small-q5_1, ggml-medium-q5_0 and ggml-large-v2-q5_0 models are embedded in the plugin bundle and the *Model* parameter is used to select which one to use. You can also use other models that may be more appropriate to your needs. Please, refer to the following section dedicated to models.
 
 The Whisper Vamp Plugin has been designed for use in the free audio analysis application [Partiels](https://forum.ircam.fr/projects/detail/partiels/).
 
@@ -44,18 +44,13 @@ Use the installer for your operating system. The plugin dynamic library (*whispe
 
 ## Models
 
-By default, the plugin embeds the ggml-base-q5_1, which requires little space and offers fairly fast calculation and other models small-q5_1, medium-q5_0, and large-v2-q5_0 are installed on your system.
+By default, the plugin embeds the ggml-base-q5_1, which requires little space and offers fairly fast calculation. The ggml-tiny-q5_1, ggml-small-q5_1, ggml-medium-q5_0 and ggml-large-v2-q5_0 models are also embedded in the Resources folder of the plugin bundle and offer more robust results at the cost of longer calculation times.
 
-It is possible to download other models that are potentially more robust or more adapted to your needs. To do this, you can use the `download-ggml-model.sh/cmd` scripts from Georgi Gerganov's [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project and provided with the plugin package. Once downloaded, these models must be installed in the repository:
-- Linux: `~/.config/Ircam/whispermodels` or `/opt/Ircam/whispermodels`
-- MacOS: `~/Library/Application Support/Ircam/whispermodels` or `/Library/Application Support/Ircam/whispermodels`
-- Windows: `\Documents and Settings\username\Application Data\Ircam\whispermodels` or `\Documents and Settings\All Users\Application Data\Ircam\whispermodels`
+It is possible to use other models that are potentially more robust or more adapted to your needs. To do this, you can use the `download-ggml-model.sh/cmd` scripts from Georgi Gerganov's [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project to download the ggml models. The models must be placed in a directory and the `WHISPERMODELSPATH` environment variable must be set to the path of this directory. 
 
-It is possible to use another directory by setting the `WHISPERMODELSPATH` environment variable. 
+Once the environment variable is set, you can select the models in the plugin properties window. 
 
-Once installed in one of the directories, you can select the models in the plugin properties window. 
-
-> ⚠️ Please note that if you delete, modify or add models in these directories, the models will no longer be indexed in the same way, and the plugin may no longer be able to find the selected model. After modification, make sure that the template name corresponds to the one you want.
+> ⚠️ Please note that if you delete, modify or add models in this directory, the models will no longer be indexed in the same way, and the plugin may no longer be able to find the selected model. After modification, make sure that the template name corresponds to the one you want.
 
 [Further information](https://github.com/ggerganov/whisper.cpp/blob/master/models/README.md#available-models) on downloading and generating models can be found on Georgi Gerganov's Whisper.cpp project page. 
 
