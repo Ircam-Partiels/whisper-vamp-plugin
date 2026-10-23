@@ -3,6 +3,8 @@ name: CI
 on: [push, pull_request]
 
 env:
+  # Enables the sccache GitHub Actions storage backend to keep the compiler cache between builds.
+  SCCACHE_GHA_ENABLED: "true"
   # Checks for the '[debug]' string in the commit message to compile as debug instead of release.
   build_type: ${{ contains(github.event.head_commit.message, '[debug]') && 'Debug' || 'Release' }}
   # Checks whether the event corresponds to a tag to activate the automatic creation of a release.
@@ -68,8 +70,10 @@ jobs:
         key: wvp-models-q5
         enableCrossOsArchive: true
     - uses: seanmiddleditch/gha-setup-ninja@master
+    - name: Sccache
+      uses: mozilla-actions/sccache-action@v0.0.11
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DCMAKE_C_COMPILER="/usr/bin/clang" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
+      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DCMAKE_C_COMPILER="/usr/bin/clang" -DCMAKE_CXX_COMPILER="/usr/bin/clang++" -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DWVP_USE_SCCACHE=ON -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
     - name: Build
       run: cmake --build ${{ github.workspace }}/build
     - name: Test
@@ -123,8 +127,10 @@ jobs:
       with:
         arch: x64
     - uses: seanmiddleditch/gha-setup-ninja@master
+    - name: Sccache
+      uses: mozilla-actions/sccache-action@v0.0.11
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG="${{ env.tag_name }}" -DWVP_ENABLE_DEBUG=OFF -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
+      run: cmake -B ${{ github.workspace }}/build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG="${{ env.tag_name }}" -DWVP_ENABLE_DEBUG=OFF -DWVP_USE_SCCACHE=ON -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
     - name: Build
       run: cmake --build ${{ github.workspace }}/build
     - name: Test
@@ -188,8 +194,10 @@ jobs:
         security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k ${{ secrets.DEV_ID_PASSWORD }} buildagent >/dev/null
         xcrun notarytool store-credentials "notary-installer" --apple-id ${{ secrets.DEV_USER_APPLE_ID }} --team-id ${{ secrets.DEV_TEAM_APPLE_ID }} --password ${{ secrets.DEV_SPEC_APP_PASSWORD }} >/dev/null
     - uses: seanmiddleditch/gha-setup-ninja@master
+    - name: Sccache
+      uses: mozilla-actions/sccache-action@v0.0.11
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -G Ninja -DVPP_CODESIGN_APPLE_KEYCHAIN_PROFILE_INSTALLER="notary-installer" -DVPP_NOTARIZE=ON -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
+      run: cmake -B ${{ github.workspace }}/build -G Ninja -DVPP_CODESIGN_APPLE_KEYCHAIN_PROFILE_INSTALLER="notary-installer" -DVPP_NOTARIZE=ON -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_ENABLE_DEBUG=OFF -DWVP_USE_SCCACHE=ON -DEMBEDDED_MODELS_IN_PACKAGE=${{ env.embed_models }}
     - name: Build
       run: |
         security unlock-keychain -p ${{ secrets.DEV_ID_PASSWORD }} buildagent
