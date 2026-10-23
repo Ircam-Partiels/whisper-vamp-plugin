@@ -3,12 +3,18 @@ cmake_policy(SET CMP0091 NEW)
 
 option(WVP_ENABLE_DEBUG "Enables the debug scheme using the Partiels application" ON)
 
+### Models only ###
+set(WVP_MODELS_ONLY OFF CACHE BOOL "Only downloads the ggml models (used by the CI cache, without Whisper.cpp and the other dependencies)")
+
+### Manual only ###
+set(WVP_MANUAL_ONLY OFF CACHE BOOL "Only generates the documentation (without the models, Whisper.cpp and the other dependencies)")
+
 set(WVP_TESTER_ENABLE ON CACHE STRING "Enables the tests with the vamp plugin tester")
 set(WVP_TESTER_TIMEOUT 600 CACHE STRING "The timeout in seconds of the test with the vamp plugin tester (zero for no timeout)")
 
 ### Sccache ###
 set(WVP_USE_SCCACHE OFF CACHE BOOL "Uses sccache as the compiler launcher")
-if(WVP_USE_SCCACHE)
+if(WVP_USE_SCCACHE AND NOT WVP_MODELS_ONLY)
   if(NOT CMAKE_C_COMPILER_LAUNCHER AND NOT CMAKE_CXX_COMPILER_LAUNCHER)
     find_program(WVP_SCCACHE_PROGRAM sccache)
     if(WVP_SCCACHE_PROGRAM)
@@ -33,6 +39,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STR
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE CACHE BOOL "Default value for POSITION_INDEPENDENT_CODE of targets" FORCE)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE CACHE BOOL "Default value for INTERPROCEDURAL_OPTIMIZATION of targets" FORCE)
 
+if(NOT WVP_MODELS_ONLY AND NOT WVP_MANUAL_ONLY)
 ### Include Vamp (IVE) ###
 set(IVE_BUILD_HOST_LIBRARY OFF)
 set(IVE_BUILD_PLUGIN_LIBRARY ON)
@@ -82,6 +89,7 @@ if(MSVC)
   set_target_properties(ggml PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   set_target_properties(whisper PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
+endif()
 
 ### Project ###
 project(WhisperVampPlugin VERSION 4.0.0 LANGUAGES C CXX)
@@ -99,6 +107,7 @@ endif()
 message(STATUS "Whisper Vamp Plugin: " ${WVP_BUILD_TAG} " (" ${GIT_COMMIT_ID} ")")
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${WVP_BUILD_TAG})
 
+if(NOT WVP_MODELS_ONLY AND NOT WVP_MANUAL_ONLY)
 ### Package ###
 set(VPP_NAME "Whisper" CACHE PATH "The name of the project" FORCE)
 set(VPP_COMPANY "Ircam" CACHE PATH "The name of the company" FORCE)
@@ -110,9 +119,11 @@ set(VPP_CHANGELOG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/ChangeLog.txt" CACH
 set(VPP_ICON_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/Ircam-logo-noir-RS.png" CACHE PATH "The icon file to add to the distribution" FORCE)
 set(VPP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/package CACHE PATH "The directory of the package" FORCE)
 include(vamp-plugin-packager/vamp-plugin-packager.cmake)
+endif()
 
 ### Source ###
 
+if(NOT WVP_MANUAL_ONLY)
 ### Models ###
 # The ggml models are not compiled into the plugin: they are downloaded here
 # and copied into the Resources folder of the Vamp bundle (see the POST_BUILD command).
@@ -131,6 +142,7 @@ foreach(WVP_MODEL_CAPACITY IN ITEMS "base-q5_1" "tiny-q5_1" "small-q5_1" "medium
     file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/models/ggml-${WVP_MODEL_CAPACITY}.bin")
   endif()
 endforeach()
+endif()
 
 file(GLOB WVP_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/source/wvp.cpp
@@ -138,6 +150,7 @@ file(GLOB WVP_SOURCES
 )
 source_group("sources" FILES ${WVP_SOURCES})
 
+if(NOT WVP_MODELS_ONLY AND NOT WVP_MANUAL_ONLY)
 ### Target ###
 add_library(wvp MODULE ${WVP_SOURCES})
 ive_prepare_plugin_target(wvp)
@@ -168,7 +181,9 @@ add_custom_command(TARGET wvp POST_BUILD
 )
 
 vpp_create_clang_format_targets(wvp ${WVP_SOURCES})
+endif()
 
+if(NOT WVP_MODELS_ONLY)
 ### Manual ###
 set(WVP_MANUAL_DIR ${CMAKE_CURRENT_BINARY_DIR}/Manual)
 file(MAKE_DIRECTORY ${WVP_MANUAL_DIR})
@@ -191,4 +206,5 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "## Downloads\n")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Linux.zip](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Linux.zip)\n")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-MacOS.pkg](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-MacOS.pkg)\n")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Windows.exe](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Windows.exe)\n")
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Manual.zip](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Manual.zip)\n") 
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/whisper-release.md "- [Whisper-Manual.zip](${PROJECT_URL}/releases/download/${WVP_BUILD_TAG}/Whisper-Manual.zip)\n")
+endif()

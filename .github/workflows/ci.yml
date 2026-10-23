@@ -26,6 +26,8 @@ jobs:
         exclude-regex: 'whisper.cpp'
   # Creates a cache for the ggml models downloaded with the Whisper.cpp
   # scripts and copied into the Resources folder of the Vamp bundle.
+  # Configures the project in models-only mode so that neither Whisper.cpp
+  # nor the other dependencies are required to download the models.
   Cache:
     runs-on: ubuntu-latest
     needs: Format
@@ -40,7 +42,7 @@ jobs:
         key: wvp-models
         enableCrossOsArchive: true
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }}
+      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_MODELS_ONLY=ON
   # Compiles, tests and packages the plugin for Ubuntu.
   Ubuntu:
     runs-on: ubuntu-22.04
@@ -204,25 +206,19 @@ jobs:
           ${{ github.workspace }}/package/Whisper-MacOS.pkg
           ${{ github.workspace }}/Whisper-Vamp-MacOS.zip
   # Generates the documentation.
+  # Configures the project in manual-only mode so that neither the models,
+  # Whisper.cpp nor the submodules are required to generate the documentation.
   Doc:
     runs-on: ubuntu-latest
-    needs: Cache
+    needs: Format
     steps:
     - uses: actions/checkout@v7
-      with:
-        submodules: recursive
     - uses: actions/setup-node@v7
       with:
         node-version: 20
     - run: npm install -g git+https://github.com/elliotblackburn/mdpdf.git#3.0.4
-    - name: Cache
-      uses: actions/cache@v6
-      with:
-        path: ./build/models
-        key: wvp-models
-        enableCrossOsArchive: true
     - name: Configure
-      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG=${{ env.tag_name }}
+      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.build_type }} -DWVP_BUILD_TAG=${{ env.tag_name }} -DWVP_MANUAL_ONLY=ON
     - name: Build
       run: |
         cmake --build build --target wvp_manual
