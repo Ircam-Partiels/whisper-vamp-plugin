@@ -174,7 +174,7 @@ endif()
 vpp_add_plugin(wvp
   OUTPUT_NAME ircamwhisper
   CATFILE ${CMAKE_CURRENT_SOURCE_DIR}/resource/ircamwhisper.cat
-  COPYRIGHT "Copyright 2026 Ircam. All rights reserved"
+  COPYRIGHT "Copyright 2026 Ircam. MIT License"
   VERSION ${PROJECT_VERSION_MAJOR}
   INSTALL ON
   DEBUG ${WVP_ENABLE_DEBUG}
@@ -189,6 +189,22 @@ vpp_add_plugin(wvp
 
 add_custom_command(TARGET wvp POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory "${WVP_MODELS_DIR}" "$<TARGET_FILE_DIR:wvp>/../Resources/models"
+)
+
+# The licenses of the plugin, of the third-party libraries and of the models are
+# copied into the Resources/licenses folder of the Vamp bundle (hence they are
+# distributed with the bundle and the installers). The ThirdPartyNotices.txt file
+# lists the components, refers to the license files and contains the notices of
+# the Whisper models (OpenAI, MIT License) and of the JUCE code (ISC license).
+# The Whisper.cpp license (MIT License) also covers ggml.
+set(WVP_LICENSES_DIR "$<TARGET_FILE_DIR:wvp>/../Resources/licenses")
+add_custom_command(TARGET wvp POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${WVP_LICENSES_DIR}"
+  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/resource/ThirdPartyNotices.txt" "${WVP_LICENSES_DIR}/ThirdPartyNotices.txt"
+  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" "${WVP_LICENSES_DIR}/Whisper-Vamp-Plugin.txt"
+  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp/LICENSE" "${WVP_LICENSES_DIR}/whisper.cpp.txt"
+  COMMAND ${CMAKE_COMMAND} -E copy "${VAMP_SDK_PATH}/COPYING" "${WVP_LICENSES_DIR}/vamp-plugin-sdk.txt"
+  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/ircam-vamp-extension/LICENSE" "${WVP_LICENSES_DIR}/ircam-vamp-extension.txt"
 )
 
 vpp_create_clang_format_targets(wvp ${WVP_SOURCES})
